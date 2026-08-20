@@ -145,7 +145,3 @@ Reusing the machinery needs no credit; reusing the words or the pictures does.
 
 > "Bacteriophage life cycles" by Sean Nair, CC BY 4.0 —
 > https://github.com/seannair/Bacteriophage-life-cycle-animation
-
-## Credits
-
-Written by Sean Nair with [Claude](https://claude.com/claude-code).
