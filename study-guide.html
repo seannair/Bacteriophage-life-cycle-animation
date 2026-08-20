@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<!--
+  Bacteriophage life cycles — student guide
+  Copyright (c) 2026 Sean Nair · https://github.com/seannair/Bacteriophage-life-cycle-animation
+
+  Dual licensed. The code (engine, timeline, audio, layout) is MIT.
+  The content (captions, labels, visual design, and any capture of the
+  animation) is CC BY 4.0 — credit required. See LICENSE in the repository.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Student guide — Bacteriophage life cycles</title>
+<meta name="description" content="How to read the lytic and lysogenic cycle animations: colour key, phase-by-phase biology, and self-check questions.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#eaf6f2; --dim:#9db8b1; --faint:#557a72; --body:#c8ded8;
+  --mint:#5fe8c6; --mint2:#a4f5de; --amber:#ffb26b; --coral:#ff8a5c;
+  --viol:#b49bff; --viol2:#d3c4ff;
+  --line:rgba(140,220,200,.16); --card:rgba(6,19,25,.6);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:#04101a;color:var(--body);
+ font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.62;
+ background-image:radial-gradient(1100px 640px at 20% 4%,rgba(24,110,112,.14),transparent 60%),
+                  radial-gradient(900px 560px at 88% 92%,rgba(150,110,255,.09),transparent 62%),
+                  linear-gradient(180deg,#082430 0%,#051a25 42%,#030d15 100%);
+ background-attachment:fixed}
+.wrap{max-width:860px;margin:0 auto;padding:64px 30px 96px}
+a{color:var(--mint2)}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--ink);
+ font-size:clamp(30px,4.6vw,46px);letter-spacing:-.02em;line-height:1.04}
+h1 em{font-style:normal;color:var(--mint)}
+h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--ink);
+ font-size:clamp(23px,3.1vw,31px);letter-spacing:-.01em;margin:56px 0 14px;
+ padding-top:22px;border-top:1px solid var(--line)}
+h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;color:var(--ink);
+ font-size:19px;margin:34px 0 8px}
+h4{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.22em;color:var(--dim);
+ text-transform:uppercase;margin:22px 0 8px}
+p{margin:0 0 14px}
+.tag{display:block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.24em;color:var(--dim);margin-bottom:10px}
+.lede{font-size:17px;color:#d6e9e4;margin:20px 0 8px}
+.small{font-size:13.5px;color:var(--dim)}
+ul,ol{margin:0 0 14px 20px}
+li{margin-bottom:7px}
+strong{color:var(--ink);font-weight:600}
+em.term{font-style:normal;color:var(--mint2);font-weight:500}
+code,.mono{font-family:"IBM Plex Mono",monospace;font-size:.9em}
+.tc{display:inline-block;font:500 11px "IBM Plex Mono",monospace;letter-spacing:.08em;
+ color:#04222b;background:var(--mint);border-radius:99px;padding:2px 9px;vertical-align:1px}
+.tc.v{background:var(--viol);color:#150c2e}
+/* callouts */
+.box{background:var(--card);border:1px solid var(--line);border-left:2px solid var(--mint);
+ border-radius:0 10px 10px 0;padding:16px 20px;margin:20px 0}
+.box.v{border-left-color:var(--viol)}
+.box.warn{border-left-color:var(--amber)}
+.box p:last-child{margin-bottom:0}
+.box h4{margin-top:0}
+/* figures */
+figure{margin:22px 0 26px}
+figure img{display:block;width:100%;border:1px solid var(--line);border-radius:10px;background:#04101a}
+figcaption{font-size:12.5px;color:var(--dim);margin-top:9px;line-height:1.55}
+figcaption b{color:var(--body);font-weight:600}
+/* key table */
+.key{width:100%;border-collapse:collapse;margin:16px 0 8px;font-size:13.5px}
+.key th{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.18em;color:var(--dim);
+ text-transform:uppercase;text-align:left;padding:0 10px 9px 0;border-bottom:1px solid var(--line)}
+.key td{padding:11px 10px 11px 0;border-bottom:1px solid rgba(140,220,200,.08);vertical-align:top}
+.key td:first-child{width:64px}
+.key td:nth-child(2){color:var(--ink);font-weight:600;white-space:nowrap}
+.sw{display:block;width:46px;height:20px;border-radius:5px;border:1px solid rgba(255,255,255,.13)}
+.gl{display:block;width:46px;height:20px}
+.gl svg{width:100%;height:100%;overflow:visible}
+/* comparison / plain tables */
+table.t{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+table.t th{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.16em;color:var(--dim);
+ text-transform:uppercase;text-align:left;padding:0 12px 9px 0;border-bottom:1px solid var(--line)}
+table.t td{padding:10px 12px 10px 0;border-bottom:1px solid rgba(140,220,200,.08);vertical-align:top}
+/* questions */
+details{background:var(--card);border:1px solid var(--line);border-radius:10px;
+ padding:14px 18px;margin:11px 0}
+details summary{cursor:pointer;color:var(--ink);font-weight:600;font-size:14.5px;list-style:none}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"?";display:inline-grid;place-items:center;width:20px;height:20px;
+ border-radius:50%;background:rgba(95,232,198,.14);color:var(--mint);
+ font:500 11px "IBM Plex Mono",monospace;margin-right:11px;vertical-align:-3px}
+details[open] summary{margin-bottom:10px}
+details .ans{font-size:13.5px;border-top:1px solid var(--line);padding-top:11px}
+details .ans p:last-child{margin-bottom:0}
+/* nav */
+.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 24px;margin:30px 0 10px}
+.toc h4{margin-top:0}
+.toc ol{margin:0 0 0 18px;font-size:14px}
+.toc a{text-decoration:none;color:var(--body)}
+.toc a:hover{color:var(--mint2)}
+footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);
+ font-size:12.5px;color:var(--faint)}
+/* ---------------- print ---------------- */
+@media print{
+  @page{margin:16mm 14mm}
+  body{background:#fff !important;color:#16211f;background-image:none}
+  .wrap{max-width:none;padding:0}
+  h1,h2,h3,strong,.key td:nth-child(2),details summary{color:#0b1614}
+  h1 em{color:#0b6b56}
+  h2{border-top:1px solid #ccd8d5;page-break-after:avoid}
+  h3,h4{page-break-after:avoid}
+  h4{color:#4a5f5a}
+  .tag,.small,figcaption,footer,.key th,table.t th{color:#5a6d68}
+  figcaption b{color:#16211f}
+  .lede{color:#16211f}
+  em.term{color:#0b6b56}
+  .box{background:#f4f8f7;border:1px solid #ccd8d5;border-left:2px solid #0b6b56;page-break-inside:avoid}
+  .box.v{border-left-color:#6b3fd4}
+  .box.warn{border-left-color:#a86b1f}
+  figure{page-break-inside:avoid}
+  figure img{border:1px solid #ccd8d5;width:auto;max-width:100%;max-height:86mm}
+  .key td,table.t td{border-bottom:1px solid #e3ebe9}
+  details{background:#f4f8f7;border:1px solid #ccd8d5;page-break-inside:avoid}
+  details .ans{border-top:1px solid #ccd8d5}
+  details summary::before{background:#e3ebe9;color:#0b6b56}
+  .toc{background:#f4f8f7;border:1px solid #ccd8d5}
+  .toc a{color:#16211f}
+  .tc{background:#0b6b56;color:#fff}
+  .tc.v{background:#6b3fd4;color:#fff}
+  .noprint{display:none}
+  .pagebreak{page-break-before:always}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<span class="tag">STUDENT GUIDE · READ ALONGSIDE THE ANIMATIONS</span>
+<h1>How to read the <em>phage life cycle</em> animations</h1>
+
+<p class="lede">The two animations pack a lot into a small space. This guide gives you
+the colour key, walks through what is happening at each phase, and tells you what to
+look for on screen. Timecodes like <span class="tc">0:27</span> are the animation's
+own clock — type them into the scrubber, or click the phase name along the top.</p>
+
+<p class="small noprint">The films:
+<a href="phage%20lytic%20cycle.html">The Lytic Cycle</a> ·
+<a href="phage%20lysogenic%20cycle.html">The Lysogenic Cycle</a>.
+Pause with <code>Space</code>, step through with <code>←</code> and <code>→</code>,
+and slow to 0.5× with <code>1</code>. The dense phases reward half speed.</p>
+
+<div class="toc noprint">
+  <h4>Contents</h4>
+  <ol>
+    <li><a href="#key">The colour key</a></li>
+    <li><a href="#lytic">The lytic cycle, phase by phase</a></li>
+    <li><a href="#lyso">The lysogenic cycle, phase by phase</a></li>
+    <li><a href="#check">Check yourself</a></li>
+  </ol>
+</div>
+
+<h2 id="key">1 · The colour key</h2>
+
+<div class="box">
+<h4>The one rule that decodes everything</h4>
+<p><strong>Colour tells you whose DNA it is.</strong> Mint green is phage. Amber is host.
+Violet is phage DNA that has become <em class="term">part of</em> the host chromosome — the
+prophage. When something changes colour in these films, ownership has changed. Watching the
+violet arc turn mint at <span class="tc v">1:36</span> is watching a prophage stop being a
+passenger and start being a virus again.</p>
+</div>
+
+<h3>Structures</h3>
+<table class="key">
+<tr><th></th><th>What it is</th><th>Where you see it</th></tr>
+<tr><td><span class="sw" style="background:#8cf0d7"></span></td><td>Phage particle</td>
+  <td>Head, tail and tail fibres. Also its free DNA once inside the cell.</td></tr>
+<tr><td><span class="sw" style="background:#ffb46e"></span></td><td>Host envelope</td>
+  <td>The capsule outline of every bacterium. Whitens and strains before lysis.</td></tr>
+<tr><td><span class="sw" style="background:#ffc48c"></span></td><td>Host chromosome</td>
+  <td>The crinkled closed loop inside the cell — a single circular molecule.</td></tr>
+<tr><td><span class="sw" style="background:#ffdcaf"></span></td><td>Ribosomes</td>
+  <td>Faint speckle drifting in the cytoplasm. They are what the phage hijacks.</td></tr>
+<tr><td><span class="sw" style="background:#b49bff"></span></td><td>Prophage</td>
+  <td>λ film only. The stretch of the host loop that is now λ DNA.</td></tr>
+<tr><td><span class="sw" style="background:#5fe8c6"></span></td><td>Prophage, activated</td>
+  <td>λ film only. The same arc after induction, once its lytic genes are firing.</td></tr>
+</table>
+
+<h3>Proteins and events in the λ film</h3>
+<p class="small">These are the shapes that appear briefly and matter enormously. Half speed
+helps.</p>
+<table class="key">
+<tr><th></th><th>What it is</th><th>What it does, and when</th></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><rect x="12" y="5" width="22" height="11" rx="3.5" fill="rgba(160,130,255,.25)" stroke="#c6b2ff" stroke-width="1.6"/></svg></span></td>
+  <td>cI repressor</td>
+  <td>The lysogeny switch. Accumulates and pairs into dimers, then sits on the
+  O<sup>R</sup> operators and silences the lytic genes. <span class="tc v">0:31–0:41</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><path d="M23 3 L32 10 L23 17 L14 10 Z" fill="none" stroke="#96f0be" stroke-width="1.6"/></svg></span></td>
+  <td>CII</td>
+  <td>The deciding factor. It switches on cI production, but host proteases destroy it
+  almost as fast as it is made. <span class="tc v">0:27–0:35</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><path d="M23 4 L31 16 L15 16 Z" fill="none" stroke="#ffb26b" stroke-width="1.6"/></svg></span></td>
+  <td>Cro</td>
+  <td>cI's rival. If Cro wins the operators instead, the cell goes lytic. Here it loses and
+  fades. <span class="tc v">0:30–0:40</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><path d="M23 4 L29.5 8.7 L27 16 L19 16 L16.5 8.7 Z" fill="none" stroke="#8cf0d7" stroke-width="1.6"/></svg></span></td>
+  <td>Int — integrase</td>
+  <td>Phage enzyme. Cuts and rejoins DNA at the <em class="term">att</em> sites to insert the
+  genome, and later to cut it back out. <span class="tc v">0:41</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><path d="M23 4 L29.5 8.7 L27 16 L19 16 L16.5 8.7 Z" fill="none" stroke="#ff966e" stroke-width="1.6"/></svg></span></td>
+  <td>IHF — host factor</td>
+  <td><em>Host</em> protein, hence the warmer colour. Bends the DNA so Int can reach both
+  sites at once. <span class="tc v">0:41</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><line x1="23" y1="2" x2="23" y2="18" stroke="#ffb26b" stroke-width="2.4" stroke-linecap="round"/></svg></span></td>
+  <td>att sites</td>
+  <td>Short ticks crossing the DNA. <span class="mono">attP</span> on the phage circle,
+  <span class="mono">attB</span> on the chromosome; after integration they become
+  <span class="mono">attL</span> and <span class="mono">attR</span> at each end of the
+  prophage.</td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><g stroke="#ff785a" stroke-width="2.2" stroke-linecap="round"><line x1="17" y1="4" x2="29" y2="16"/><line x1="29" y1="4" x2="17" y2="16"/></g></svg></span></td>
+  <td>DNA damage</td>
+  <td>Thymine dimers made by the UV. They appear one at a time while the lamp is on, so you
+  can see the dose accumulating. <span class="tc v">1:28</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><g fill="#8cf0b4"><circle cx="12" cy="10" r="2.6"/><circle cx="18" cy="10" r="2.6"/><circle cx="24" cy="10" r="2.6"/><circle cx="30" cy="10" r="2.6"/><circle cx="36" cy="10" r="2.6"/></g></svg></span></td>
+  <td>RecA filament</td>
+  <td>Host protein polymerising along damaged DNA. Beads spreading round the loop.
+  <span class="tc v">1:31</span></td></tr>
+<tr><td><span class="sw" style="background:#c9b6ff"></span></td><td>UV light</td>
+  <td>The violet glare and the moving beams, with a lamp badge at the top of the frame.
+  <span class="tc v">1:28–1:35</span></td></tr>
+<tr><td><span class="gl"><svg viewBox="0 0 46 20"><circle cx="23" cy="10" r="3" fill="#ffe08a"/><circle cx="23" cy="10" r="6.5" fill="none" stroke="rgba(255,224,138,.45)"/></svg></span></td>
+  <td>Toxin</td>
+  <td>Prophage-encoded protein leaving the lysogens — lysogenic conversion.
+  <span class="tc v">1:22–1:28</span></td></tr>
+</table>
+
+<div class="box warn">
+<h4>Two shapes worth telling apart</h4>
+<p>The <strong>phage silhouettes differ between the films, on purpose</strong>. The T4-like
+phage in the lytic film has a thick tail with a contractile sheath and six fibres — it fires
+like a syringe. λ has a long, thin, flexible tail with a single fibre and no sheath at all:
+its DNA is driven down the tube without anything contracting. If you can spot which phage you
+are looking at from the tail alone, you have understood something real about phage taxonomy.</p>
+</div>
+
+<h2 id="lytic">2 · The lytic cycle, phase by phase</h2>
+<p>A T4-like phage infecting <em>E. coli</em>. The whole point of this cycle is speed: get in,
+seize the machinery, make copies, break out. About 25–30 minutes in reality, compressed to
+<span class="tc">1:42</span> here.</p>
+
+<h3>01 · Adsorption <span class="tc">0:00</span></h3>
+<figure><img src="docs/guide/lyt-01.png" alt="A phage docked on the bacterial surface, tail fibres splayed against the membrane">
+<figcaption><b>0:06</b> — the tail fibres have found the surface and the phage is anchored.
+The amber dots on the membrane are the receptors it has bound.</figcaption></figure>
+<p>The phage drifts in and its tail fibres probe the surface until two of them lock onto
+specific outer-membrane receptor proteins. This is not a virus attacking a cell it has chosen;
+it is diffusion plus a lock-and-key fit. <strong>Host range is decided here</strong> — a phage
+can only infect a cell that displays the receptor its fibres recognise.</p>
+<p><b>Look for:</b> the phage sits <em>outside</em> the membrane throughout. It never enters.</p>
+
+<h3>02 · Penetration <span class="tc">0:07</span></h3>
+<figure><img src="docs/guide/lyt-02.png" alt="The phage sheath contracted, with a dashed line of DNA entering the cell">
+<figcaption><b>0:11</b> — the sheath has contracted (the tail is visibly shorter) and the
+genome is threading through the tube into the cytoplasm.</figcaption></figure>
+<p>The contractile sheath shortens like a coiled spring, driving the hollow tail tube through
+the cell wall and membrane. The DNA is then driven through into the cytoplasm. The capsid stays
+outside as an empty shell — a "ghost".</p>
+<p><b>Look for:</b> the head fading as it empties, and the tail visibly shortening. This is the
+step λ does <em>not</em> do.</p>
+
+<h3>03 · Biosynthesis <span class="tc">0:15</span></h3>
+<figure><img src="docs/guide/lyt-03.png" alt="Inside the cell: host DNA fragmenting while dashed rings of phage DNA replicate and small capsid parts appear">
+<figcaption><b>0:26</b> — host DNA in fragments, dashed mint rings of replicating phage DNA,
+and the first capsid and tail proteins appearing.</figcaption></figure>
+<p>The phage shreds the host genome with its own nucleases and repurposes the ribosomes. The
+cell is now a factory running the phage's programme: phage DNA is replicated, and capsid, tail
+and baseplate proteins are mass-produced. This is the <em class="term">eclipse period</em> — if
+you burst the cell now you would find <em>no</em> infectious particles, only parts.</p>
+<p><b>Look for:</b> the amber host chromosome breaking up and disappearing, replaced by mint
+rings and small mint components.</p>
+
+<h3>04 · Assembly <span class="tc">0:32</span></h3>
+<figure><img src="docs/guide/lyt-04.png" alt="Complete phage particles filling the cell interior">
+<figcaption><b>0:40</b> — complete particles accumulating. Roughly fifty per cell.</figcaption></figure>
+<p>The parts self-assemble. No blueprint and no assembly line: heads, tails and fibres fit
+together because their shapes only fit one way, then DNA is packaged into each head. The number
+built before the cell bursts is the <em class="term">burst size</em>.</p>
+
+<h3>05 · Lysis <span class="tc">0:46</span></h3>
+<figure><img src="docs/guide/lyt-05.png" alt="The cell rupturing, membrane fragments flying outward as phages spill out">
+<figcaption><b>0:51</b> — lysins have digested the wall and the cell is coming apart. The
+coral fragments are the membrane.</figcaption></figure>
+<p>Phage-encoded <em class="term">lysins</em> digest the peptidoglycan wall from the inside. The
+cell can no longer resist its own internal pressure, swells, and ruptures, releasing its cargo.
+The host is destroyed — this is what makes the cycle lytic.</p>
+
+<h3>06 · Propagation <span class="tc">0:54</span></h3>
+<figure><img src="docs/guide/lyt-06.png" alt="Progeny phages scattering across the field toward other bacteria">
+<figcaption><b>0:58</b> — the burst scattering. Three particles are on course for fresh hosts;
+the rest drift out of range.</figcaption></figure>
+<p>Each new particle can start the cycle again. In a dense culture the titer climbs roughly
+fiftyfold per generation — exponential growth that stops only when the hosts run out.</p>
+<div class="box warn">
+<p><strong>Do not read "3 of 50" as biology.</strong> Only three progeny find hosts here because
+the scene is deliberately sparse, so you can follow individual particles. In a real culture
+almost every particle that adsorbs starts a new burst.</p>
+</div>
+
+<h2 id="lyso" class="pagebreak">3 · The lysogenic cycle, phase by phase</h2>
+<p>Phage λ infecting <em>E. coli</em> K-12. This cycle is the interesting one: the phage does
+not have to kill. It can insert itself into the host chromosome and be copied, for free, for
+thousands of generations — then leave when conditions turn bad.</p>
+
+<h3>01 · Adsorption <span class="tc v">0:00</span></h3>
+<figure><img src="docs/guide/lys-01.png" alt="Lambda phage with its long thin tail docked on the cell surface">
+<figcaption><b>0:06</b> — λ anchored by its tail tip. Note the long, thin, flexible tail: no
+sheath, and one fibre rather than six.</figcaption></figure>
+<p>λ binds <strong>LamB</strong>, a porin the bacterium makes to take up maltose. The phage has
+evolved to recognise a protein the host needs for its own metabolism — which is why λ infects
+<em>E. coli</em> K-12 and very little else.</p>
+
+<h3>02 · Injection <span class="tc v">0:08</span></h3>
+<figure><img src="docs/guide/lys-02.png" alt="A long strand of phage DNA snaking into the cytoplasm">
+<figcaption><b>0:13</b> — the genome entering as a long linear strand, the capsid emptying
+outside.</figcaption></figure>
+<p>No sheath contracts. The DNA is driven down the flexible tail into the cytoplasm as a
+<strong>linear</strong> double-stranded molecule, 48,502 base pairs long.</p>
+<p><b>Look for:</b> the strand is a line with two ends, not yet a circle. That matters next.</p>
+
+<h3>03 · Circularisation <span class="tc v">0:18</span></h3>
+<figure><img src="docs/guide/lys-03.png" alt="The phage genome closing into a circle inside the cell">
+<figcaption><b>0:25</b> — the ends have found each other and the genome is now a closed
+circle, smaller than the host chromosome beside it.</figcaption></figure>
+<p>Each end of the λ genome carries a 12-nucleotide single-stranded overhang called a
+<em class="term">cos</em> site. The two overhangs are complementary, so they base-pair with each
+other, and host DNA ligase seals the remaining nicks. The genome is now a covalently closed
+circle.</p>
+<div class="box v">
+<p><strong>Why this step exists.</strong> A linear molecule has ends, and ends get chewed by
+host exonucleases. More importantly, the integration reaction that follows requires a circle —
+a linear genome physically cannot insert this way. Circularisation is the gateway to lysogeny,
+which is why it gets its own phase.</p>
+</div>
+
+<h3>04 · The decision <span class="tc v">0:27</span></h3>
+<figure><img src="docs/guide/lys-04.png" alt="Violet cI blocks, green CII diamonds and amber Cro triangles inside the cell, with a branching diagram at right">
+<figcaption><b>0:38</b> — cI (violet blocks) gathering on the operator while Cro (amber
+triangles) fades. The fork at right shows which path is being taken.</figcaption></figure>
+<p>This is the heart of the film. Two proteins compete for the same stretch of DNA:</p>
+<ul>
+<li><strong>cI</strong>, the λ repressor, switches the lytic genes <em>off</em> → lysogeny.</li>
+<li><strong>Cro</strong> switches them <em>on</em> → lysis.</li>
+</ul>
+<p>What tips the balance is a third protein, <strong>CII</strong>, which drives cI production.
+Host proteases destroy CII almost as fast as it is made, so CII only survives when conditions
+favour it — a <em class="term">high multiplicity of infection</em> (many phages per cell,
+implying hosts are scarce) and a starved host (implying poor prospects for a burst). Enough CII
+survives, cI accumulates, dimerises, occupies the operators, and the lytic genes go quiet.</p>
+<div class="box v">
+<p><strong>The decision is not random and it is not the phage "choosing".</strong> It is a
+molecular race whose outcome is biased by measurable conditions. A well-fed cell infected by a
+single phage usually goes lytic; a starved cell infected by several usually goes lysogenic.
+That is the answer to "why would a virus not kill its host" — when hosts are scarce, waiting
+inside one beats bursting and finding nothing.</p>
+</div>
+
+<h3>05 · Integration <span class="tc v">0:41</span></h3>
+<figure><img src="docs/guide/lys-05.png" alt="Integrase and IHF at the att site as the phage circle merges into the host chromosome">
+<figcaption><b>0:52</b> — the phage circle has opened and inserted. The violet arc is the
+prophage; the orange ticks at each end are attL and attR.</figcaption></figure>
+<p><strong>Int</strong> (phage integrase), helped by <strong>IHF</strong> (a host DNA-bending
+protein), lines up <span class="mono">attP</span> on the phage circle with
+<span class="mono">attB</span> on the bacterial chromosome and swaps the strands. λ does not
+insert anywhere it likes: <span class="mono">attB</span> is a single specific site, between the
+<em>gal</em> and <em>bio</em> operons. The phage genome is now physically part of the host
+chromosome — a <em class="term">prophage</em> — flanked by two hybrid sites,
+<span class="mono">attL</span> and <span class="mono">attR</span>.</p>
+<p><b>Look for:</b> the moment the mint circle vanishes and a violet arc appears in the amber
+loop. Same DNA; new ownership; new colour.</p>
+
+<h3>06 · Lysogeny <span class="tc v">0:56</span></h3>
+<figure><img src="docs/guide/lys-06.png" alt="Four bacteria in a row, each chromosome carrying a violet prophage arc">
+<figcaption><b>1:25</b> — two divisions later. Four cells, four prophages: every descendant
+inherited it. The yellow dots are prophage-encoded toxin.</figcaption></figure>
+<p>The prophage is silent but not gone. cI keeps the lytic genes repressed, and the prophage is
+copied along with the host chromosome at every division — so it spreads through the population
+without killing anything, and without building a single new particle. Watch the chromosome
+duplicate <em>before</em> the septum closes: that is how both daughters end up with a copy.</p>
+<p>Two consequences worth knowing:</p>
+<ul>
+<li><strong>Superinfection immunity.</strong> cI floating in the cytoplasm also shuts down any
+second λ that infects. A lysogen is resistant to the phage it carries.</li>
+<li><strong>Lysogenic conversion.</strong> Some prophages carry genes the host then expresses.
+The Shiga toxin that makes <em>E. coli</em> O157:H7 dangerous is phage DNA in a prophage like
+this one. The bacterium is the same species it always was; it has acquired a weapon it did not
+have before.</li>
+</ul>
+
+<h3>07 · Induction <span class="tc v">1:28</span></h3>
+<figure><img src="docs/guide/lys-07.png" alt="UV light bathing the cells, red damage crosses and green RecA beads on the chromosomes">
+<figcaption><b>1:31</b> — the UV lamp is on. Red crosses are thymine dimers; the green beads
+are RecA polymerising along the damaged DNA.</figcaption></figure>
+<p>DNA damage — UV light here, or a chemical like mitomycin C — triggers the host's
+<em class="term">SOS response</em>. RecA polymerises on single-stranded DNA at the damage and
+becomes a <em class="term">co-protease</em>: it does not cut cI itself, but it stimulates cI to
+cleave <em>itself</em> in half. The repressor concentration collapses, Cro takes the operators,
+and the lytic genes fire.</p>
+<div class="box v">
+<p><strong>The logic is elegant.</strong> The prophage is monitoring its host's health through
+a host stress signal. Damaged DNA means the cell may be dying — and a sinking ship is worth
+leaving. Note that two of the four lysogens do not induce: induction is never total.</p>
+</div>
+
+<h3>08 · Excision and lysis <span class="tc v">1:40</span></h3>
+<figure><img src="docs/guide/lys-08.png" alt="Excised circular phage genomes with concatemers spooling out inside two cells">
+<figcaption><b>1:48</b> — the two induced cells have cut their prophage back out. The long
+strand is a concatemer being spun off by rolling-circle replication. The outer two cells still
+carry violet prophages.</figcaption></figure>
+<p><strong>Xis</strong> together with Int runs the integration reaction backwards, cutting at
+<span class="mono">attL</span> and <span class="mono">attR</span> to excise the genome as a
+circle again. Replication then switches to <em class="term">rolling-circle</em>, spinning out a
+long concatemer — many genomes end to end — which is cut at each <em class="term">cos</em> site
+as it is packaged into heads.</p>
+<figure><img src="docs/guide/lys-09.png" alt="Two cells bursting while two others remain intact carrying prophages">
+<figcaption><b>2:00</b> — two cells lyse and release around a hundred phage each. Two lysogens
+survive on either side, prophages intact.</figcaption></figure>
+<div class="box warn">
+<p><strong>Rarely, excision is imprecise</strong> and cuts slightly off-target, carrying away
+the neighbouring <em>gal</em> or <em>bio</em> host genes inside the phage particle. Those genes
+then get delivered to the next cell. This is <em class="term">specialised transduction</em>, and
+it is a real route by which bacteria acquire genes from each other.</p>
+</div>
+
+<h2 id="check" class="pagebreak">4 · Check yourself</h2>
+<p class="small">Answers are hidden — have a go first. If you can answer these, you have
+followed the animations.</p>
+
+<h4>The lytic cycle</h4>
+<details><summary>Why can a phage only infect certain species of bacteria?</summary>
+<div class="ans"><p>Because attachment depends on its tail fibres recognising a specific
+receptor molecule on the cell surface. No receptor, no attachment, no infection. Host range is
+decided at adsorption, before any genetic material has moved.</p></div></details>
+<details><summary>If you burst an infected cell during the eclipse period, why do you find no infectious phage?</summary>
+<div class="ans"><p>Because the components exist but have not been assembled yet. Phage DNA,
+capsid proteins and tails are all present separately; a particle is only infectious once they
+are put together and DNA is packaged.</p></div></details>
+<details><summary>The animation shows only 3 of 50 progeny finding a host. Why is that not a realistic figure?</summary>
+<div class="ans"><p>Because the scene is deliberately sparse so individual particles can be
+followed. In a dense culture nearly every particle that adsorbs starts a new burst — which is
+why titer climbs roughly fiftyfold per generation.</p></div></details>
+<details><summary>What actually kills the cell?</summary>
+<div class="ans"><p>Phage-encoded lysins digesting the peptidoglycan wall from within. The
+weakened cell cannot resist its internal osmotic pressure and ruptures. The phage does not
+"break out" mechanically — it dissolves the wall chemically.</p></div></details>
+
+<h4>The lysogenic cycle</h4>
+<details><summary>Why must the λ genome circularise before it can integrate?</summary>
+<div class="ans"><p>Site-specific recombination between <span class="mono">attP</span> and
+<span class="mono">attB</span> inserts a circle into a circle. A linear molecule cannot undergo
+this reaction. Circularisation via the complementary cos overhangs, sealed by host ligase, is
+what makes integration possible.</p></div></details>
+<details><summary>A cell is infected by several phages at once and is short of nutrients. Lytic or lysogenic — and why?</summary>
+<div class="ans"><p>Lysogenic. Both conditions stabilise CII, which drives cI production; cI
+then represses the lytic genes. Biologically it makes sense: many phages per cell implies hosts
+are scarce, and a starved host is a poor factory, so waiting beats bursting.</p></div></details>
+<details><summary>What is the difference between attB, attP, attL and attR?</summary>
+<div class="ans"><p><span class="mono">attB</span> is the site on the <b>b</b>acterial
+chromosome and <span class="mono">attP</span> the site on the <b>p</b>hage genome. Recombination
+between them produces two hybrid sites, <span class="mono">attL</span> and
+<span class="mono">attR</span>, which flank the prophage on the <b>l</b>eft and
+<b>r</b>ight. Excision recombines attL with attR to regenerate attB and attP.</p></div></details>
+<details><summary>Why is a lysogen resistant to infection by the same phage?</summary>
+<div class="ans"><p>Because cI repressor made from the prophage is present throughout the
+cytoplasm. Any incoming λ genome has its lytic genes repressed by that existing cI just as the
+prophage's own are. This is superinfection immunity.</p></div></details>
+<details><summary>RecA is described as a co-protease. What does that mean, and why not just say it cuts cI?</summary>
+<div class="ans"><p>Because RecA does not cut cI. Activated RecA stimulates cI to cleave
+<em>itself</em> — the repressor has latent self-cleaving activity that RecA promotes. Saying
+RecA cuts it gets the mechanism wrong.</p></div></details>
+<details><summary>A prophage-carrying strain of E. coli produces Shiga toxin. Is it a different species from harmless E. coli?</summary>
+<div class="ans"><p>No. Same species, same organism — it has acquired extra genes carried by a
+prophage, which it now expresses. This is lysogenic conversion. Cure the strain of its prophage
+and the toxin goes with it.</p></div></details>
+<details><summary>Antibiotics that damage DNA are avoided in suspected Shiga-toxin E. coli infection. Using the animation, explain why.</summary>
+<div class="ans"><p>DNA damage triggers the SOS response, which induces the prophage. The
+Shiga toxin genes sit in that prophage and are expressed as it goes lytic, so the drug can
+increase toxin release and lysis rather than helping. Phase 07 and phase 06 connect
+directly.</p></div></details>
+
+<footer>
+<p><b>Bacteriophage life cycles</b> · student guide · CC BY 4.0 · Sean Nair<br>
+<span class="noprint"><a href="index.html">Back to the animations</a> ·
+<a href="https://github.com/seannair/Bacteriophage-life-cycle-animation">Source and full notes on where these animations simplify</a></span></p>
+</footer>
+
+</div>
+<script>
+window.addEventListener('beforeprint', function () {
+  var d = document.querySelectorAll('details');
+  for (var i = 0; i < d.length; i++) d[i].open = true;
+});
+</script>
+</body>
+</html>
