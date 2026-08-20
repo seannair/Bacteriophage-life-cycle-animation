@@ -11,6 +11,10 @@ a file and it runs. Written for teaching.
 | **[The Lytic Cycle](https://seannair.github.io/Bacteriophage-life-cycle-animation/phage%20lytic%20cycle.html)** | a T4-like phage × *E. coli* | 6 phases · 1:42 |
 | **[The Lysogenic Cycle](https://seannair.github.io/Bacteriophage-life-cycle-animation/phage%20lysogenic%20cycle.html)** | phage λ × *E. coli* K-12 | 8 phases · 2:34 |
 
+**[Student guide](https://seannair.github.io/Bacteriophage-life-cycle-animation/study-guide.html)**
+— the colour key, a phase-by-phase walkthrough with figures, and self-check questions.
+Also as a printable [PDF](docs/bacteriophage-study-guide.pdf) for handing out.
+
 ![The lytic cycle, phase 06](docs/screenshot.png)
 ![The lysogenic cycle, phase 05](docs/screenshot-lysogenic.png)
 
