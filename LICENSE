@@ -1,0 +1,58 @@
+Bacteriophage life cycles — licensing
+Copyright (c) 2026 Sean Nair
+
+This project is released under two licences, because the same files hold two
+different kinds of work: a piece of software, and the teaching material it
+draws.
+
+
+SOFTWARE — MIT License          (full text in LICENSE-MIT)
+
+    The HTML, CSS and JavaScript considered as source code: the rendering
+    engine, the timeline and easing machinery, the camera, the procedural
+    Web Audio soundtrack, the transport controls and the page layout.
+
+    Fork it, adapt it, build your own animations on it, commercially or
+    otherwise. Keep the copyright notice. No attribution beyond that notice
+    is required.
+
+
+CONTENT — Attribution 4.0 International (CC BY 4.0)
+                                (details in LICENSE-CC-BY-4.0)
+
+    The expressive material: the written captions, annotation labels, phase
+    descriptions and end-card text — including where that text sits inside
+    the source files; the visual design of the animations; and any still
+    image, screen recording, frame grab or other capture of them, including
+    the screenshots in docs/ and the prose of this README.
+
+    Share it and adapt it, for any purpose including commercially, but give
+    appropriate credit, link to the licence, and say if you changed it.
+
+
+THE SHORT VERSION
+
+    Reusing the machinery needs no credit. Reusing the words or the pictures
+    does. If you are unsure which licence covers a particular use, crediting
+    the author satisfies both.
+
+
+ATTRIBUTION
+
+    A suggested form, for a slide, a handout or a caption:
+
+        "Bacteriophage life cycles" by Sean Nair, CC BY 4.0
+        https://github.com/seannair/Bacteriophage-life-cycle-animation
+
+    If you modified the animation, please say so, so that any errors you
+    introduce are not attributed to the original.
+
+
+A NOTE ON THE SPLIT
+
+    The boundary is between the program and what the program expresses. Code
+    that draws a bacterium is software and is MIT. The picture of the
+    bacterium it produces, and the sentence explaining what the bacterium is
+    doing, are content and are CC BY 4.0. In practice: a developer forking
+    the engine is working under MIT; a teacher putting a frame or a caption
+    into a lecture is working under CC BY 4.0.

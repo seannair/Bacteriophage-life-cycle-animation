@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<!--
+  Bacteriophage life cycles — The Lytic Cycle
+  Copyright (c) 2026 Sean Nair · https://github.com/seannair/Bacteriophage-life-cycle-animation
+
+  Dual licensed. The code (engine, timeline, audio, layout) is MIT.
+  The content (captions, labels, visual design, and any capture of the
+  animation) is CC BY 4.0 — credit required. See LICENSE in the repository.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Lytic Cycle — a T4-like bacteriophage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#eaf6f2; --dim:#9db8b1; --faint:#557a72;
+  --mint:#5fe8c6; --mint2:#a4f5de; --amber:#ffb26b; --coral:#ff8a5c;
+  --line:rgba(140,220,200,.16); --panel:rgba(6,19,25,.92);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:#04101a;color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;overflow:hidden}
+canvas#cv{position:fixed;inset:0;display:block;cursor:pointer}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.05;
+ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2"/></filter><rect width="220" height="220" filter="url(%23n)"/></svg>')}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+/* ---------- top bar ---------- */
+.top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
+ padding:18px 28px;pointer-events:none;z-index:5}
+.brand{display:flex;gap:13px;align-items:center;pointer-events:auto;animation:drop .8s .1s both}
+.brand svg{width:34px;height:34px;flex:none}
+.tag{display:block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.28em;color:var(--dim);margin-bottom:5px}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(20px,2.6vw,30px);letter-spacing:-.01em;line-height:1}
+h1 em{font-style:normal;color:var(--mint)}
+.steps{display:flex;gap:22px;pointer-events:auto;animation:drop .8s .25s both}
+.step{display:flex;align-items:center;gap:9px;background:none;border:0;cursor:pointer;padding:6px 2px}
+.step .dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--mint);opacity:.35;transition:all .3s}
+.step .lbl{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);transition:color .3s;white-space:nowrap}
+.step:hover .dot{opacity:.9}
+.step.done .dot{background:var(--mint);opacity:.85}
+.step.done .lbl{color:var(--dim)}
+.step.active .dot{opacity:1;box-shadow:0 0 0 4px rgba(95,232,198,.18);animation:pulse 2s infinite}
+.step.active .lbl{color:var(--ink)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(95,232,198,.18)}50%{box-shadow:0 0 0 7px rgba(95,232,198,.05)}}
+@keyframes drop{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+/* ---------- caption ---------- */
+.cap{position:fixed;left:28px;bottom:104px;display:flex;gap:18px;align-items:flex-start;max-width:440px;
+ padding-right:30px;background:linear-gradient(90deg,rgba(3,12,17,.82),rgba(3,12,17,0));z-index:5}
+.capn{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:52px;line-height:.9;
+ color:transparent;-webkit-text-stroke:1.5px rgba(95,232,198,.75);flex:none}
+.capb h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;letter-spacing:-.01em;margin-bottom:7px}
+.capb p{font-size:14px;line-height:1.55;color:#cfe3dd;max-width:40ch}
+.capb.anim{animation:capin .5s both}
+@keyframes capin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ---------- telemetry ---------- */
+.tele{position:fixed;right:28px;top:104px;width:258px;padding:2px 0 12px 26px;background:linear-gradient(270deg,rgba(3,12,17,.82) 55%,rgba(3,12,17,0));font-family:"IBM Plex Mono",monospace;z-index:5;animation:drop .8s .4s both}
+.t-h{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.32em;color:var(--dim);margin-bottom:14px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px var(--mint);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.row{display:flex;align-items:baseline;gap:8px;font-size:11px;letter-spacing:.06em;color:#7ea79d;margin-bottom:9px}
+.row .lead{flex:1;border-bottom:1px dotted rgba(126,167,157,.3);transform:translateY(-3px)}
+.row .v{color:var(--ink);font-weight:500;font-size:13.5px}
+.row .v.pop{animation:pop .45s}
+@keyframes pop{40%{transform:scale(1.4);color:var(--mint2)}}
+.note{margin-top:10px;font-size:9.5px;letter-spacing:.05em;color:var(--faint);line-height:1.6}
+.hint{margin-top:10px;font-size:9.5px;letter-spacing:.08em;color:var(--faint);line-height:1.7}
+/* ---------- end card ---------- */
+.end{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+ text-align:center;pointer-events:none;opacity:0;z-index:6;padding:0 20px}
+.ebig{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(42px,7.5vw,92px);letter-spacing:-.02em}
+.ebig i{font-style:normal;color:var(--amber);padding:0 .12em}
+.end p{max-width:52ch;color:#bcd6cf;font-size:15px;line-height:1.55}
+.emono{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.35em;color:var(--mint)}
+/* ---------- transport deck ---------- */
+.deck{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(980px,calc(100% - 28px));
+ display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--panel);
+ border:1px solid var(--line);border-radius:12px;z-index:7;animation:rise .8s .3s both}
+@keyframes rise{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+.play{width:46px;height:46px;border-radius:50%;border:0;background:var(--mint);color:#04222b;cursor:pointer;
+ display:grid;place-items:center;transition:transform .15s,box-shadow .15s;flex:none}
+.play:hover{transform:scale(1.07);box-shadow:0 0 22px rgba(95,232,198,.45)}
+.play svg{width:18px;height:18px}
+.play .bars{display:none}
+.play.on .tri{display:none}
+.play.on .bars{display:block}
+.tcode{font:500 12.5px "IBM Plex Mono",monospace;color:var(--dim);min-width:118px;flex:none}
+.scrub{position:relative;flex:1;min-width:120px;height:26px;display:flex;align-items:center;cursor:pointer}
+.track{position:relative;width:100%;height:6px;border-radius:3px;background:#0e2831}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#2c9c82,var(--mint));width:0}
+.tick{position:absolute;top:-4px;width:2px;height:14px;background:rgba(255,178,107,.55)}
+.thumb{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--mint);
+ border:2.5px solid #04222b;transform:translate(-50%,-50%);left:0;transition:transform .12s;box-shadow:0 0 8px rgba(95,232,198,.5)}
+.scrub:hover .thumb{transform:translate(-50%,-50%) scale(1.25)}
+.tip{position:absolute;bottom:26px;transform:translateX(-50%);background:#0a222b;border:1px solid var(--line);
+ font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--mint2);padding:5px 9px;border-radius:6px;
+ opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap}
+.tip.show{opacity:1}
+.seg3{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.seg3 button{background:none;border:0;color:var(--dim);font:500 11px "IBM Plex Mono",monospace;padding:7px 11px;cursor:pointer;transition:all .15s}
+.seg3 button:hover{color:var(--ink)}
+.seg3 button.on{background:var(--mint);color:#04222b}
+.ico{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--dim);
+ cursor:pointer;display:grid;place-items:center;transition:all .15s;flex:none}
+.ico svg{width:17px;height:17px}
+.ico:hover{color:var(--ink);border-color:rgba(140,220,200,.4)}
+.ico.on{color:var(--mint);border-color:rgba(95,232,198,.5);background:rgba(95,232,198,.07)}
+@media (max-width:940px){
+  .steps .lbl{display:none}
+  .steps{gap:12px}
+  .tele{display:none}
+  .cap{left:16px;right:16px;bottom:92px;max-width:none;padding-right:14px}
+  .capn{font-size:40px}
+  .deck{flex-wrap:wrap;justify-content:center;gap:10px;bottom:10px;width:calc(100% - 20px)}
+  .tcode{order:5;min-width:0}
+}
+@media (max-height:860px){
+  .cap{bottom:96px;max-width:580px}
+  .capn{font-size:42px}
+  .capb h2{font-size:20px;margin-bottom:5px}
+  .capb p{font-size:12.5px;line-height:1.45;max-width:58ch}
+}
+@media (prefers-reduced-motion:reduce){
+  .pulse,.step.active .dot{animation:none}
+}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="grain"></div>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" fill="none" stroke="#5fe8c6" stroke-width="1.6" stroke-linejoin="round">
+      <polygon points="20,3 28.5,8 28.5,18 20,23 11.5,18 11.5,8"/>
+      <rect x="16" y="23.5" width="8" height="2.6" fill="#5fe8c6" stroke="none"/>
+      <rect x="18.8" y="26.1" width="2.4" height="8" fill="#5fe8c6" stroke="none"/>
+      <path d="M18.5 34 L13 39 M21.5 34 L27 39 M20 34.5 L20 39.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <span class="tag">SPECIMEN · T4-LIKE × E. COLI · TIMELAPSE</span>
+      <h1>The <em>Lytic</em> Cycle</h1>
+    </div>
+  </div>
+  <nav class="steps" id="steps" aria-label="Phases"></nav>
+</header>
+<aside class="tele">
+  <div class="t-h"><span class="pulse"></span>LIVE READOUT</div>
+  <div class="row"><span>Progeny released</span><span class="lead"></span><span class="v" id="vP">0</span></div>
+  <div class="row"><span>Cells lysed</span><span class="lead"></span><span class="v" id="vL">0</span></div>
+  <div class="row"><span>Generation</span><span class="lead"></span><span class="v" id="vG">I</span></div>
+  <div class="row"><span>Burst / cell</span><span class="lead"></span><span class="v">≈50</span></div>
+  <div class="note">≈50 per lysis · 8 drawn per wave-2 burst</div>
+  <div class="hint">SPACE play &nbsp;·&nbsp; ← → seek<br>1 2 3 speed &nbsp;·&nbsp; L loop &nbsp;·&nbsp; click canvas</div>
+</aside>
+<section class="cap">
+  <span class="capn" id="capn">01</span>
+  <div class="capb" id="capb">
+    <h2 id="capT">Adsorption</h2>
+    <p id="capD"></p>
+  </div>
+</section>
+<div class="end" id="end">
+  <div class="ebig">1 <i>→</i> 50 <i>→</i> 200</div>
+  <p>Each infected cell releases ≈50 — a T4-like phage (wild-type T4: 100–200). In this sparse scene only 3 of the 50 find a fresh host; in a dense culture every progeny that adsorbs starts a new burst — ≈50× per generation, until the hosts run out.</p>
+  <span class="emono">LOOP · THE TAPE REWINDS</span>
+</div>
+<footer class="deck">
+  <button class="play" id="play" aria-label="Play / pause">
+    <svg class="tri" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+    <svg class="bars" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>
+  </button>
+  <span class="tcode" id="tcode">00:00 / 01:42</span>
+  <div class="scrub" id="scrub" aria-label="Timeline">
+    <div class="track" id="track"><div class="fill" id="fill"></div><div class="thumb" id="thumb"></div></div>
+    <div class="tip" id="tip"></div>
+  </div>
+  <div class="seg3" id="spds">
+    <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button>
+  </div>
+  <button class="ico on" id="loopB" aria-label="Loop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+  </button>
+  <button class="ico" id="sndB" aria-label="Sound">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path class="w1" opacity="0.25" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="w2" opacity="0.25" d="M18.5 5.5a9.5 9.5 0 0 1 0 13"/></svg>
+  </button>
+</footer>
+<noscript><p style="position:fixed;top:50%;width:100%;text-align:center">This animation needs JavaScript.</p></noscript>
+<script>
+'use strict';
+/* ================= core ================= */
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+/* SCN = end of the animated scene; T = full timeline incl. the end-card hold */
+var SCN = 72, HOLD = 30, T = SCN + HOLD, W = 1600, H = 1000, TAU = Math.PI * 2;
+var B = [0, 7, 15, 32, 46, 54];
+var PH = [
+  { n: 'Adsorption', d: 'Six tail fibers probe the bacterial surface. Two lock onto specific outer-membrane receptors — the molecular key and lock that decides exactly which species this phage can open.' },
+  { n: 'Penetration', d: 'The contractile sheath fires like a piston. The hollow tail tube punches through both cell walls and the phage genome streams in, while the empty shell waits outside.' },
+  { n: 'Biosynthesis', d: 'The eclipse period. The host genome is shredded and its ribosomes are reprogrammed — the cell now mass-produces phage DNA, capsid proteins and tails.' },
+  { n: 'Assembly', d: 'Self-assembly, no blueprints. Heads fill with packaged DNA, tails and baseplates snap on — about fifty complete particles build inside a single cell.' },
+  { n: 'Lysis', d: 'Encoded lysins digest the cell wall from within. The bacterium swells and ruptures, spilling its cargo of new phage into the medium.' },
+  { n: 'Propagation', d: 'The burst scatters — and in principle every particle could start a new cell, a ~50× jump per generation. In this sparse scene only 3 of the 50 find a fresh host; the rest drift out of range and decay. In a dense culture the titer climbs ~50× every 25–30 min, until the hosts run out: exponential, and host-limited.' }
+];
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function c01(v) { return clamp(v, 0, 1); }
+function seg(t, a, b) { return c01((t - a) / (b - a)); }
+function lerp(a, b, p) { return a + (b - a) * p; }
+function eIO(p) { return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+function eO(p) { return 1 - Math.pow(1 - p, 3); }
+function eI(p) { return p * p * p; }
+function eB(p) { var c = 1.70158; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
+function rng(seed) {
+  var s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    var z = Math.imul(s ^ (s >>> 15), 1 | s);
+    z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+  };
+}
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ================= scene data ================= */
+function mkB(x, y, r, rot, seed) {
+  var q = rng(seed * 77), ribs = [], nucl = [], i, k, rx = 0, ry = 0;
+  for (i = 0; i < 13; i++) {
+    for (k = 0; k < 9; k++) {
+      rx = (q() - .5) * 1.6; ry = (q() - .5) * .9;
+      if ((rx / .92) * (rx / .92) + (ry / .6) * (ry / .6) <= 1) break;
+    }
+    ribs.push({ x: rx, y: ry, ph: q() * TAU });
+  }
+  for (i = 0; i < 3; i++) {
+    nucl.push({ x: (q() - .5) * .45, y: (q() - .5) * .3, rx: .3 + q() * .2, ry: .17 + q() * .12, rot: q() * 3 });
+  }
+  return {
+    x: x * W, y: y * H, r: r, rot: rot,
+    dr: { a: 5 + q() * 4, f1: .2 + q() * .12, f2: .16 + q() * .1, p1: q() * TAU, p2: q() * TAU },
+    ribs: ribs, nucl: nucl
+  };
+}
+var BACT = [
+  mkB(.52, .52, 62, -.32, 11), mkB(.16, .28, 44, .7, 22), mkB(.83, .23, 47, -.6, 33),
+  mkB(.17, .60, 42, 1.15, 44), mkB(.81, .75, 46, .15, 55), mkB(.52, .14, 38, .95, 66)
+];
+var B0 = BACT[0];
+function bpos(b, t) {
+  return {
+    x: b.x + Math.sin(t * b.dr.f1 + b.dr.p1) * b.dr.a,
+    y: b.y + Math.cos(t * b.dr.f2 + b.dr.p2) * b.dr.a * .8
+  };
+}
+function ltw(b, t, lx, ly) {
+  var bp = bpos(b, t), hw = b.r * 1.35, hh = b.r * .72;
+  var c = Math.cos(b.rot), s = Math.sin(b.rot), X = lx * hw, Y = ly * hh;
+  return { x: bp.x + X * c - Y * s, y: bp.y + X * s + Y * c };
+}
+/* E. coli is a rod with hemispherical poles: a stadium, not a superellipse.
+   radOf inverts it exactly — ray/segment distance, flat flank or end cap. */
+function radOf(hw, hh, th) {
+  var c = Math.abs(Math.cos(th)), s = Math.abs(Math.sin(th));
+  var d = Math.max(0, hw - hh);
+  if (s > 1e-9 && hh * c <= d * s) return hh / s;
+  return d * c + Math.sqrt(Math.max(0, d * d * c * c - d * d + hh * hh));
+}
+function capPt(hw, hh, th) {
+  var r = radOf(hw, hh, th);
+  return { x: r * Math.cos(th), y: r * Math.sin(th) };
+}
+function capPath(hw, hh) {
+  ctx.beginPath();
+  for (var i = 0; i <= 72; i++) {
+    var p = capPt(hw, hh, i / 72 * TAU);
+    if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+  }
+  ctx.closePath();
+}
+function quad(p0, p1, c, p) {
+  var u = 1 - p;
+  return {
+    x: u * u * p0.x + 2 * u * p * c.x + p * p * p1.x,
+    y: u * u * p0.y + 2 * u * p * c.y + p * p * p1.y
+  };
+}
+/* hero phage dock (approaches from top-left) */
+var APP = { x: -220, y: -210 };
+function heroDock(t) {
+  var bp = bpos(B0, t);
+  var a = Math.atan2(bp.y - APP.y, bp.x - APP.x);
+  var rd = radOf(B0.r * 1.35, B0.r * .72, a) + 2;
+  return { x: bp.x - Math.cos(a) * rd, y: bp.y - Math.sin(a) * rd, a: a, bp: bp };
+}
+/* hero interior */
+var HR = rng(99);
+var rings0 = [];
+for (var ri = 0; ri < 10; ri++) {
+  rings0.push({ lx: (HR() - .5) * 1.4, ly: (HR() - .5) * .8, r: 4 + HR() * 4, ap: 16.8 + ri * 1.05, pack: 34 + ri * .95, ph: HR() * TAU });
+}
+var asmp = [];
+for (ri = 0; ri < rings0.length; ri++) asmp.push({ lx: rings0[ri].lx, ly: rings0[ri].ly, ap: rings0[ri].pack, ang: HR() * TAU });
+for (ri = 0; ri < 6; ri++) asmp.push({ lx: (HR() - .5) * 1.3, ly: (HR() - .5) * .7, ap: 43.2 + ri * .4, ang: HR() * TAU });
+var parts = [];
+for (ri = 0; ri < 20; ri++) parts.push({ lx: (HR() - .5) * 1.5, ly: (HR() - .5) * .85, ang: HR() * TAU, ap: 19 + ri * .5, type: ri % 2 });
+var shreds = [];
+for (ri = 0; ri < 10; ri++) shreds.push({ lx: (HR() - .5) * 1.3, ly: (HR() - .5) * .8, ang: HR() * TAU, ph: HR() * TAU });
+var hfrags = [];
+for (ri = 0; ri < 12; ri++) hfrags.push({ th: ri / 12 * TAU + HR() * .35, sp: 95 + HR() * 70, spin: (HR() - .5) * 2, span: .24 + HR() * .09 });
+/* wave-2 targets */
+/* arr/inj pushed ~1.6 s later than the original cut: same flight path, more
+   time in the air, so the seeking progeny read as slower. lys0 is unchanged. */
+var G2T = [
+  { bi: 1, arr: 57.0, inj: 59.2, lys0: 66.5 },
+  { bi: 2, arr: 58.2, inj: 60.4, lys0: 67.7 },
+  { bi: 3, arr: 59.4, inj: 61.6, lys0: 68.9 }
+];
+for (ri = 0; ri < G2T.length; ri++) {
+  var g = G2T[ri], qg = rng(Math.round(g.lys0 * 100)), j;
+  g.bref = BACT[g.bi];
+  g.rings = [];
+  for (j = 0; j < 4; j++) g.rings.push({ lx: (qg() - .5) * 1.2, ly: (qg() - .5) * .7, r: 3.5 + qg() * 2.5, ap: g.inj + 1 + j * .35, ph: qg() * TAU });
+  g.asmp = [];
+  for (j = 0; j < g.rings.length; j++) g.asmp.push({ lx: g.rings[j].lx, ly: g.rings[j].ly, ap: g.inj + 1.9 + j * .5, ang: qg() * TAU });
+  g.frags = [];
+  for (j = 0; j < 10; j++) g.frags.push({ th: j / 10 * TAU + qg() * .4, sp: 70 + qg() * 50, spin: (qg() - .5) * 1.6, span: .24 + qg() * .08 });
+}
+function g2dock(g, t) {
+  var bp = bpos(g.bref, t), bp0 = bpos(B0, t);
+  var a = Math.atan2(bp.y - bp0.y, bp.x - bp0.x);
+  var rd = radOf(g.bref.r * 1.35, g.bref.r * .72, a) + 2;
+  return { x: bp.x + Math.cos(a) * rd, y: bp.y + Math.sin(a) * rd, a: a, bp: bp };
+}
+/* wave-2 phages (50): all launch during the burst, 49.7 → 51.2 */
+var R2 = rng(2024), asmpW = [], extraW = [], G2 = [], i2;
+for (i2 = 0; i2 < asmp.length; i2++) asmpW.push(ltw(B0, 0, asmp[i2].lx, asmp[i2].ly));
+for (i2 = 0; i2 < 34; i2++) {
+  var ex = 0, ey = 0, k2;
+  for (k2 = 0; k2 < 9; k2++) {
+    ex = (R2() - .5) * 1.7; ey = (R2() - .5) * .9;
+    if ((ex / .92) * (ex / .92) + (ey / .62) * (ey / .62) <= 1) break;
+  }
+  extraW.push(ltw(B0, 0, ex, ey));
+}
+for (i2 = 0; i2 < 50; i2++) {
+  var s0 = (i2 < 16) ? asmpW[i2] : extraW[i2 - 16];
+  var dir = Math.atan2(s0.y - B0.y, s0.x - B0.x) + (R2() - .5) * .5;
+  var o = { s0: s0, sT: 49.7 + (i2 / 49) * 1.5, dir: dir, sp: 62 + R2() * 48, ph: R2() * TAU, mode: 'free', ctl: (R2() - .5) * 120, tArr: 0, g: 0 };
+  if (i2 < 24) { o.mode = 'seek'; o.g = Math.floor(i2 / 8); o.tArr = G2T[o.g].arr + (i2 % 8) * .3; }
+  G2.push(o);
+}
+/* is a point still inside the (bursting) hero cell? */
+function insideB0(x, y, t) {
+  /* only while the membrane is still closed — it ruptures at 49.5, so from
+     ~50.2 the progeny should be visible spilling through the break */
+  if (t >= 50.2) return false;
+  var dx = x - B0.x, dy = y - B0.y;
+  var r = Math.sqrt(dx * dx + dy * dy);
+  var rm = radOf(B0.r * 1.35, B0.r * .72, Math.atan2(dy, dx));
+  return r < rm;
+}
+/* wave 3 (drawn as 8 per cell; biologically ≈50) */
+var R3 = rng(7), G3 = [];
+for (ri = 0; ri < G2T.length; ri++) {
+  var gg = G2T[ri];
+  var ga = Math.atan2(gg.bref.y - B0.y, gg.bref.x - B0.x);
+  for (j = 0; j < 8; j++) {
+    G3.push({ g: gg, sT: gg.lys0 + .18 + j * .07, dir: ga + (j - 3.5) * .3, sp: 55 + R3() * 75,
+      off: { x: (R3() - .5) * 44, y: (R3() - .5) * 28 }, ph: R3() * TAU });
+  }
+}
+/* ambient far phages + motes */
+var R4 = rng(41), BGP = [];
+for (ri = 0; ri < 3; ri++) BGP.push({ x: R4() * W, y: R4() * H, vx: 10 + R4() * 12, vy: (R4() - .5) * 10, ph: R4() * TAU, sc: .45 });
+var RM = rng(5), motesB = [], motesF = [];
+for (ri = 0; ri < 40; ri++) motesB.push({ x: RM(), y: RM(), z: .4 + RM() * .8, sp: 2 + RM() * 6, ph: RM() * TAU });
+for (ri = 0; ri < 14; ri++) motesF.push({ x: RM(), y: RM(), sp: 4 + RM() * 8, ph: RM() * TAU });
+/* ================= draw primitives ================= */
+function phage(x, y, ang, sc, alpha, o) {
+  o = o || {};
+  if (alpha <= .01) return;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(ang);
+  ctx.scale(sc, sc);
+  ctx.globalAlpha *= alpha;
+  var c = (o.c !== undefined) ? o.c : 1;
+  var hA = (o.headAlpha !== undefined) ? o.headAlpha : 1;
+  var fD = (o.dock === true);
+  var baseH = 4, tube = 9, sL = 20 * c, colH = 3, hR = 13, tip = baseH + tube;
+  function Y(v) { return v - tip; }
+  if (o.glow) {
+    var gy = Y(-(sL + colH)) - hR * .3;
+    var gr = ctx.createRadialGradient(0, gy, 4, 0, gy, 46);
+    gr.addColorStop(0, 'rgba(95,232,198,.17)');
+    gr.addColorStop(1, 'rgba(95,232,198,0)');
+    ctx.fillStyle = gr;
+    ctx.beginPath(); ctx.arc(0, gy, 46, 0, TAU); ctx.fill();
+  }
+  ctx.lineWidth = 1.4;
+  ctx.lineCap = 'round';
+  var fl = fD ? 19 : 12, sp2 = fD ? 15 : 10, si;
+  ctx.strokeStyle = 'rgba(140,240,215,' + (.7 * hA) + ')';
+  for (si = 0; si < 2; si++) {
+    var sd = si ? 1 : -1;
+    ctx.beginPath();
+    ctx.moveTo(sd * 3.5, Y(baseH * .5));
+    ctx.quadraticCurveTo(sd * sp2 * .55, Y(baseH + fl * .55), sd * sp2, Y(baseH + fl + (fD ? 7 : 0)));
+    ctx.stroke();
+  }
+  ctx.fillStyle = 'rgba(154,223,208,' + (.9 * hA) + ')';
+  ctx.fillRect(-1.4, Y(baseH), 2.8, tube);
+  ctx.fillStyle = 'rgba(120,214,192,' + (.85 * hA) + ')';
+  ctx.beginPath();
+  ctx.moveTo(-4, Y(0)); ctx.lineTo(4, Y(0));
+  ctx.lineTo(5.5, Y(baseH)); ctx.lineTo(-5.5, Y(baseH));
+  ctx.closePath(); ctx.fill();
+  var sy0 = Y(-sL), bi;
+  ctx.fillStyle = 'rgba(120,214,192,' + (.5 * hA) + ')';
+  ctx.fillRect(-3.6, sy0, 7.2, sL);
+  ctx.strokeStyle = 'rgba(225,255,246,' + (.45 * hA) + ')';
+  ctx.lineWidth = 1;
+  for (bi = 1; bi < 4; bi++) {
+    ctx.beginPath(); ctx.moveTo(-3.6, sy0 + sL * bi / 4); ctx.lineTo(3.6, sy0 + sL * bi / 4); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(140,240,215,' + (.75 * hA) + ')';
+  ctx.strokeRect(-3.6, sy0, 7.2, sL);
+  ctx.fillStyle = 'rgba(140,240,215,' + (.8 * hA) + ')';
+  ctx.fillRect(-4.6, Y(-sL - colH), 9.2, colH);
+  var hcy = Y(-(sL + colH)) - hR * .1, pts = [], hi;
+  for (hi = 0; hi < 6; hi++) {
+    var a2 = -Math.PI / 2 + hi * TAU / 6;
+    pts.push([hR * Math.cos(a2), hR * Math.sin(a2)]);
+  }
+  if (o.glow) {
+    var hg = ctx.createLinearGradient(0, hcy - hR, 0, hcy + hR);
+    hg.addColorStop(0, 'rgba(127,240,216,' + (.34 * hA) + ')');
+    hg.addColorStop(1, 'rgba(60,170,150,' + (.1 * hA) + ')');
+    ctx.fillStyle = hg;
+  } else {
+    ctx.fillStyle = 'rgba(110,225,200,' + (.26 * hA) + ')';
+  }
+  ctx.beginPath();
+  for (hi = 0; hi < 6; hi++) {
+    if (hi) ctx.lineTo(pts[hi][0], hcy + pts[hi][1]); else ctx.moveTo(pts[hi][0], hcy + pts[hi][1]);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(140,244,222,' + (.95 * hA) + ')';
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(220,255,246,' + (.16 * hA) + ')';
+  ctx.lineWidth = 1;
+  for (hi = 0; hi < 3; hi++) {
+    ctx.beginPath(); ctx.moveTo(0, hcy); ctx.lineTo(pts[hi * 2][0], hcy + pts[hi * 2][1]); ctx.stroke();
+  }
+  ctx.strokeStyle = 'rgba(225,255,248,' + (.7 * hA) + ')';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  ctx.moveTo(-hR * .45, hcy - hR * .3);
+  ctx.bezierCurveTo(-hR * .1, hcy - hR * .55, hR * .4, hcy - hR * .05, -hR * .35, hcy + hR * .2);
+  ctx.bezierCurveTo(hR * .15, hcy + hR * .45, hR * .3, hcy + hR * .3, hR * .45, hcy + hR * .15);
+  ctx.stroke();
+  ctx.restore();
+}
+function drawNucleoid(b, a) {
+  if (a <= .01) return;
+  for (var i = 0; i < b.nucl.length; i++) {
+    var n = b.nucl[i];
+    ctx.save();
+    ctx.translate(n.x * b.r * 1.35, n.y * b.r * .72);
+    ctx.rotate(n.rot);
+    ctx.fillStyle = 'rgba(255,190,130,' + (.13 * a) + ')';
+    ctx.beginPath();
+    ctx.ellipse(0, 0, n.rx * b.r * 1.35, n.ry * b.r * .72, 0, 0, TAU);
+    ctx.fill();
+    ctx.restore();
+  }
+  ctx.strokeStyle = 'rgba(255,196,140,' + (.3 * a) + ')';
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (i = 0; i <= 8; i++) {
+    var px = (i / 8 - .5) * b.r * 1.7, py = Math.sin(i * 1.7) * b.r * .22 + (i % 2) * b.r * .12;
+    if (i) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+  }
+  ctx.stroke();
+}
+function drawRibs(b, a, t) {
+  if (a <= .01) return;
+  ctx.fillStyle = 'rgba(255,220,175,' + (.5 * a) + ')';
+  for (var i = 0; i < b.ribs.length; i++) {
+    var r = b.ribs[i];
+    var x = r.x * b.r * 1.35 + Math.sin(t * .3 + r.ph) * 2;
+    var y = r.y * b.r * .72 + Math.cos(t * .26 + r.ph) * 1.6;
+    ctx.beginPath(); ctx.arc(x, y, 1.3, 0, TAU); ctx.fill();
+  }
+}
+function drawRing(x, y, r, rot, a) {
+  if (a <= .01) return;
+  ctx.save();
+  ctx.globalAlpha *= a;
+  ctx.strokeStyle = '#7ff0d8';
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([3, 4]);
+  ctx.lineDashOffset = -rot;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(215,255,244,.7)';
+  ctx.beginPath(); ctx.arc(x, y, 1.2, 0, TAU); ctx.fill();
+  ctx.restore();
+}
+function drawFragSet(frags, hw, hh, p, tint) {
+  if (p <= 0) return;
+  ctx.strokeStyle = tint;
+  ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round';
+  for (var i = 0; i < frags.length; i++) {
+    var f = frags[i];
+    var c0 = capPt(hw, hh, f.th);
+    ctx.globalAlpha = (1 - p) * .9;
+    ctx.beginPath();
+    var n = 9, jj;
+    for (jj = 0; jj <= n; jj++) {
+      var th = f.th - f.span / 2 + f.span * jj / n;
+      var p2 = capPt(hw, hh, th);
+      var ox = Math.cos(f.th) * p * f.sp, oy = Math.sin(f.th) * p * f.sp;
+      var rx2 = p2.x + ox, ry2 = p2.y + oy;
+      var dx = rx2 - c0.x, dy = ry2 - c0.y, sa = f.spin * p;
+      var px = c0.x + dx * Math.cos(sa) - dy * Math.sin(sa);
+      var py = c0.y + dx * Math.sin(sa) + dy * Math.cos(sa);
+      if (jj) ctx.lineTo(px, py); else ctx.moveTo(px, py);
+    }
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+/* ================= bacteria ================= */
+function drawBact(b, t) {
+  var bp = bpos(b, t), isB0 = (b === B0), g2 = null, i;
+  for (i = 0; i < G2T.length; i++) if (G2T[i].bref === b) g2 = G2T[i];
+  var swell = 1, strain = 0, pB = 0, inA = 1;
+  if (isB0) {
+    swell = 1 + .17 * eO(seg(t, 46, 49.5));
+    strain = seg(t, 46, 49.5);
+    pB = seg(t, 49.5, 52);
+    inA = 1 - seg(t, 50.0, 50.7);
+  }
+  if (g2) {
+    swell = 1 + .13 * seg(t, g2.lys0 - .9, g2.lys0);
+    strain = seg(t, g2.lys0 - .9, g2.lys0);
+    pB = seg(t, g2.lys0, g2.lys0 + 1.6);
+    inA = 1 - seg(t, g2.lys0 + .05, g2.lys0 + .6);
+  }
+  var hw = b.r * 1.35 * swell, hh = b.r * .72 * swell;
+  var memA = Math.round(176 - 64 * strain);
+  ctx.save();
+  ctx.translate(bp.x, bp.y);
+  ctx.rotate(b.rot);
+  if (pB > 0) {
+    ctx.fillStyle = 'rgba(255,150,90,' + (.1 * (1 - pB)) + ')';
+    capPath(hw, hh); ctx.fill();
+    drawFragSet(isB0 ? hfrags : g2.frags, hw, hh, pB, 'rgba(255,' + memA + ',110,1)');
+  } else {
+    ctx.fillStyle = 'rgba(255,150,90,' + (.09 + .06 * strain) + ')';
+    capPath(hw, hh); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,' + memA + ',110,.12)';
+    ctx.lineWidth = 6; capPath(hw, hh); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,' + memA + ',110,.85)';
+    ctx.lineWidth = 2; capPath(hw, hh); ctx.stroke();
+    ctx.save();
+    capPath(hw, hh); ctx.clip();
+    var keep = (isB0 ? (1 - seg(t, 15, 20)) : 1) * (g2 ? (1 - seg(t, g2.inj + .3, g2.inj + 1.8)) : 1) * inA;
+    drawNucleoid(b, keep);
+    drawRibs(b, (isB0 ? (1 - seg(t, 16, 24)) : 1) * .9 * inA, t);
+    if (isB0) {
+      var sa = .5 * seg(t, 16, 19) * (1 - seg(t, 19, 26));
+      if (sa > 0) {
+        ctx.strokeStyle = 'rgba(255,180,110,' + sa + ')';
+        ctx.lineWidth = 1.3;
+        for (i = 0; i < shreds.length; i++) {
+          var s = shreds[i];
+          var ox = Math.cos(s.ang) * 10 * seg(t, 16, 26), oy = Math.sin(s.ang) * 10 * seg(t, 16, 26);
+          ctx.save();
+          ctx.translate(s.lx * hw + ox, s.ly * hh + oy);
+          ctx.rotate(s.ang);
+          ctx.beginPath();
+          ctx.moveTo(-6, 0);
+          ctx.quadraticCurveTo(-2, 3 + Math.sin(t + s.ph) * 1.5, 2, 0);
+          ctx.quadraticCurveTo(5, -2.5, 8, 0);
+          ctx.stroke();
+          ctx.restore();
+        }
+      }
+      for (i = 0; i < rings0.length; i++) {
+        var rr = rings0[i];
+        var ra = eO(seg(t, rr.ap, rr.ap + .5)) * (1 - seg(t, rr.pack, rr.pack + .4)) * inA;
+        drawRing(rr.lx * hw, rr.ly * hh, rr.r, t * 6 + rr.ph, ra);
+      }
+      var pa = 1 - seg(t, 32.5, 34.5);
+      for (i = 0; i < parts.length; i++) {
+        var p2 = parts[i];
+        var pp2 = eO(seg(t, p2.ap, p2.ap + .5)) * pa;
+        if (pp2 <= .02) continue;
+        ctx.save();
+        ctx.globalAlpha = pp2;
+        ctx.translate(p2.lx * hw, p2.ly * hh);
+        ctx.rotate(p2.ang);
+        ctx.strokeStyle = 'rgba(140,240,215,.8)';
+        if (p2.type) {
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(-5, 0); ctx.lineTo(5, 0);
+          ctx.moveTo(-1.5, -2); ctx.lineTo(-1.5, 2);
+          ctx.moveTo(1.5, -2); ctx.lineTo(1.5, 2);
+          ctx.stroke();
+        } else {
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          for (var k = 0; k <= 5; k++) {
+            var a2 = k / 5 * TAU, qx = 4.5 * Math.cos(a2), qy = 4.5 * Math.sin(a2);
+            if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+      for (i = 0; i < asmp.length; i++) {
+        var aa = asmp[i], ap2 = seg(t, aa.ap, aa.ap + .5);
+        if (ap2 <= 0) continue;
+        phage(aa.lx * hw, aa.ly * hh, aa.ang + Math.sin(t * 1.5 + i) * .08, .55 * eB(ap2), inA * .95, {});
+      }
+    }
+    if (g2) {
+      for (i = 0; i < g2.rings.length; i++) {
+        var gr2 = g2.rings[i];
+        drawRing(gr2.lx * hw, gr2.ly * hh, gr2.r, t * 6 + gr2.ph, eO(seg(t, gr2.ap, gr2.ap + .4)) * inA);
+      }
+      for (i = 0; i < g2.asmp.length; i++) {
+        var ga2 = g2.asmp[i], gp2 = seg(t, ga2.ap, ga2.ap + .4);
+        if (gp2 > 0) phage(ga2.lx * hw, ga2.ly * hh, ga2.ang, .45 * eB(gp2), inA * .95, {});
+      }
+    }
+    ctx.restore(); /* clip */
+  }
+  ctx.restore();
+}
+/* ================= phages ================= */
+function p0state(t) {
+  var d = heroDock(t), bp = d.bp;
+  var A1 = { x: bp.x - Math.cos(d.a) * B0.r * 2.4, y: bp.y - Math.sin(d.a) * B0.r * 2.4 };
+  var x, y, ang;
+  if (t < 3.4) {
+    var p = eIO(seg(t, .3, 3.4));
+    var c = {
+      x: (APP.x + A1.x) / 2 + Math.cos(d.a + Math.PI / 2) * 55,
+      y: (APP.y + A1.y) / 2 + Math.sin(d.a + Math.PI / 2) * 55
+    };
+    var q0 = quad(APP, A1, c, p), q1 = quad(APP, A1, c, Math.min(1, p + .02));
+    x = q0.x; y = q0.y;
+    ang = Math.atan2(q1.y - q0.y, q1.x - q0.x) - Math.PI / 2;
+  } else if (t < 4.35) {
+    var p2 = eO(seg(t, 3.4, 4.35));
+    x = lerp(A1.x, d.x, p2); y = lerp(A1.y, d.y, p2);
+    ang = d.a - Math.PI / 2;
+  } else {
+    var w = Math.exp(-(t - 4.35) * 3) * 2, pp = d.a + Math.PI / 2;
+    x = d.x + Math.cos(pp) * Math.sin(t * 24) * w;
+    y = d.y + Math.sin(pp) * Math.sin(t * 24) * w;
+    ang = d.a - Math.PI / 2;
+  }
+  var c2 = 1 - .38 * eI(seg(t, 8.5, 11.3)) + .03 * Math.sin(t * 10) * seg(t, 7.5, 8.5) * (1 - seg(t, 8.3, 8.5));
+  var al;
+  if (t < 14) al = 1;
+  else if (t < 16) al = .9;
+  else if (t < 31.5) al = lerp(.9, .35, seg(t, 16, 31.5));
+  else al = Math.max(0, .35 * (1 - seg(t, 31.5, 32.3)));
+  return { x: x, y: y, ang: ang, c: c2, al: al, hA: t > 10.6 ? .55 : 1, dock: t >= 4.35, tip: { x: x, y: y }, d: d };
+}
+function drawP0(t) {
+  var s = p0state(t);
+  phage(s.x, s.y, s.ang, 1, s.al, { c: s.c, headAlpha: s.hA, dock: s.dock, glow: true });
+  if (t > 4.2 && t < 16) {
+    var al = .85 * (1 - seg(t, 14, 16));
+    ctx.save();
+    ctx.globalAlpha = al;
+    ctx.fillStyle = '#ffc08a';
+    var c = Math.cos(B0.rot), sn = Math.sin(B0.rot);
+    for (var i = 0; i < 3; i++) {
+      var p = capPt(B0.r * 1.35, B0.r * .72, s.d.a + Math.PI + (i - 1) * .13);
+      ctx.beginPath();
+      ctx.arc(s.d.bp.x + p.x * c - p.y * sn, s.d.bp.y + p.x * sn + p.y * c, 2.6, 0, TAU);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  var ba = seg(t, 10.6, 11.2) * (1 - seg(t, 13.4, 14));
+  if (ba > 0) {
+    var dx = s.tip.x - s.d.bp.x, dy = s.tip.y - s.d.bp.y;
+    var ix = s.tip.x - dx * .55, iy = s.tip.y - dy * .55;
+    ctx.save();
+    ctx.globalAlpha = ba;
+    ctx.setLineDash([7, 7]);
+    ctx.lineDashOffset = -t * 46;
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(215,255,244,.9)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(s.tip.x, s.tip.y); ctx.lineTo(ix, iy); ctx.stroke();
+    ctx.strokeStyle = 'rgba(127,240,216,.3)';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+}
+function drawG2(t) {
+  for (var i = 0; i < G2.length; i++) {
+    var o = G2[i];
+    if (t < o.sT) continue;
+    if (o.mode === 'seek') {
+      var g = G2T[o.g];
+      var dock = g2dock(g, t);
+      if (t < o.tArr) {
+        var p = eIO((t - o.sT) / (o.tArr - o.sT));
+        var mx = (o.s0.x + dock.x) / 2, my = (o.s0.y + dock.y) / 2;
+        var pp = Math.atan2(dock.y - o.s0.y, dock.x - o.s0.x) + Math.PI / 2;
+        var c = { x: mx + Math.cos(pp) * o.ctl, y: my + Math.sin(pp) * o.ctl };
+        var q0 = quad(o.s0, dock, c, p);
+        var q1 = quad(o.s0, dock, c, Math.min(1, p + .02));
+        if (insideB0(q0.x, q0.y, t)) continue;
+        phage(q0.x, q0.y, Math.atan2(q1.y - q0.y, q1.x - q0.x) - Math.PI / 2, .5, Math.min(1, (t - o.sT) / .4) * .95, { c: .9 });
+      } else {
+        var al = .9 * (1 - .65 * seg(t, g.inj, g.inj + 2.5));
+        var c2 = 1 - .25 * eI(seg(t, o.tArr, o.tArr + .5));
+        var ang = Math.atan2(dock.bp.y - dock.y, dock.bp.x - dock.x) - Math.PI / 2;
+        phage(dock.x, dock.y, ang, .5, al, { c: c2, dock: true });
+      }
+    } else {
+      if (t > 71.5) continue;
+      var p3 = t - o.sT;
+      var px = -Math.sin(o.dir), py = Math.cos(o.dir);
+      var x = o.s0.x + Math.cos(o.dir) * o.sp * p3 + px * Math.sin(t * .7 + o.ph) * 8;
+      var y = o.s0.y + Math.sin(o.dir) * o.sp * p3 + py * Math.sin(t * .7 + o.ph) * 8;
+      if (insideB0(x, y, t)) continue;
+      phage(x, y, o.dir - Math.PI / 2, .5, .95 * Math.min(1, p3 / .3) * (1 - seg(t, 66, 71.5)), { c: .9 });
+    }
+  }
+}
+function drawG3(t) {
+  for (var i = 0; i < G3.length; i++) {
+    var o = G3[i];
+    if (t < o.sT) continue;
+    var bp = bpos(o.g.bref, o.sT);
+    var p = t - o.sT;
+    var wob = Math.sin(t * .8 + o.ph) * 6;
+    var x = bp.x + o.off.x + Math.cos(o.dir) * o.sp * p + Math.cos(o.dir + Math.PI / 2) * wob;
+    var y = bp.y + o.off.y + Math.sin(o.dir) * o.sp * p + Math.sin(o.dir + Math.PI / 2) * wob;
+    phage(x, y, o.dir - Math.PI / 2, .34, .8 * (1 - seg(t, 70, 71.8)), { c: .9 });
+  }
+}
+function drawBgP(t) {
+  for (var i = 0; i < BGP.length; i++) {
+    var p = BGP[i];
+    var x = (p.x + t * p.vx) % W;
+    var y = p.y + Math.sin(t * .25 + p.ph) * 20 + t * p.vy * .3;
+    phage(x, y, Math.atan2(p.vy, p.vx) - Math.PI / 2, p.sc, .3, {});
+  }
+}
+/* ================= fx & annotations ================= */
+function ring(x, y, r, a, col) {
+  if (a <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.strokeStyle = col;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke();
+  ctx.restore();
+}
+function drawFx(t) {
+  var d = heroDock(t);
+  ring(d.x, d.y, 6 + 34 * seg(t, 4.6, 5.5), .8 * (1 - seg(t, 4.6, 5.5)), '#7ff0d8');
+  var fp = eI(seg(t, 8.5, 8.9)) * (1 - seg(t, 8.9, 9.6));
+  if (fp > 0) {
+    ctx.save();
+    ctx.globalAlpha = fp;
+    ctx.strokeStyle = '#e8fff8';
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(d.x, d.y); ctx.lineTo(d.x - Math.cos(d.a) * 24, d.y - Math.sin(d.a) * 24); ctx.stroke();
+    ctx.restore();
+  }
+  var lp = seg(t, 49.5, 52);
+  if (lp > 0) {
+    var bp = bpos(B0, t);
+    ring(bp.x, bp.y, 14 + 110 * lp, (1 - lp) * .8, '#ffb26b');
+    ctx.save();
+    ctx.globalAlpha = (1 - lp) * .5;
+    ctx.strokeStyle = '#ff8a5c';
+    ctx.lineWidth = 2;
+    for (var i = 0; i < 14; i++) {
+      var a2 = i / 14 * TAU + (i * 37 % 10);
+      var l1 = 18 + ((i * 53) % 22);
+      ctx.beginPath();
+      ctx.moveTo(bp.x + Math.cos(a2) * 30 * lp, bp.y + Math.sin(a2) * 30 * lp);
+      ctx.lineTo(bp.x + Math.cos(a2) * (30 + l1) * lp, bp.y + Math.sin(a2) * (30 + l1) * lp);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  for (i = 0; i < G2T.length; i++) {
+    var g = G2T[i];
+    var gp = seg(t, g.lys0, g.lys0 + 1);
+    if (gp > 0) {
+      var bp2 = bpos(g.bref, t);
+      ring(bp2.x, bp2.y, 8 + 52 * gp, (1 - gp) * .7, '#ffb26b');
+    }
+    var ip = seg(t, g.inj, g.inj + .8);
+    if (ip > 0) {
+      var dk = g2dock(g, t);
+      ring(dk.bp.x, dk.bp.y, 3 + 6 * ip, (1 - ip) * .8, '#7ff0d8');
+    }
+  }
+}
+var ANN = [
+  { a: 4.7, b: 8.2, fn: function (t) { return { txt: 'tail fibers → receptor', pt: heroDock(t), o: { x: -88, y: -52, side: 1 } }; } },
+  { a: 10.8, b: 13.8, fn: function (t) { return { txt: 'genome injected', pt: heroDock(t), o: { x: 88, y: -8, side: 0 } }; } },
+  { a: 17, b: 24, fn: function (t) { return { txt: 'host DNA degraded', pt: bpos(B0, t), o: { x: -168, y: 52, side: 1 } }; } },
+  { a: 21, b: 31, fn: function (t) { return { txt: 'phage DNA replicates', pt: bpos(B0, t), o: { x: 150, y: -84, side: 0 } }; } },
+  /* anchored to one of the hexagonal capsid glyphs (parts[4], appears at 21 s) */
+  { a: 24.5, b: 31.5, fn: function (t) { return { txt: 'capsid + tail proteins', pt: ltw(B0, t, parts[4].lx, parts[4].ly), o: { x: 150, y: 96, side: 0 } }; } },
+  { a: 35, b: 44, fn: function (t) { return { txt: 'self-assembly', pt: bpos(B0, t), o: { x: -168, y: -96, side: 1 } }; } },
+  { a: 47.5, b: 52.5, fn: function (t) { return { txt: 'lysins weaken the wall', pt: bpos(B0, t), o: { x: 158, y: 96, side: 0 } }; } },
+  { a: 53, b: 56, fn: function (t) { return { txt: 'progeny seek new hosts', pt: { x: (B0.x + BACT[2].x) / 2, y: (B0.y + BACT[2].y) / 2 }, o: { x: 46, y: -100, side: 0 } }; } },
+  { a: 66.5, b: 70.5, fn: function (t) { return { txt: 'generation III · ≈50 released', pt: bpos(BACT[1], t), o: { x: 104, y: -78, side: 0 } }; } }
+];
+function drawAnno(t) {
+  ctx.save();
+  ctx.font = '500 12px "IBM Plex Mono", monospace';
+  for (var i = 0; i < ANN.length; i++) {
+    var A = ANN[i];
+    var al = seg(t, A.a, A.a + .5) * (1 - seg(t, A.b - .5, A.b));
+    if (al <= 0) continue;
+    var r = A.fn(t);
+    var lx = r.pt.x + r.o.x, ly = r.pt.y + r.o.y;
+    ctx.globalAlpha = al;
+    ctx.strokeStyle = 'rgba(160,240,220,.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(r.pt.x, r.pt.y); ctx.lineTo(lx, ly); ctx.stroke();
+    ctx.fillStyle = 'rgba(160,240,220,.9)';
+    ctx.beginPath(); ctx.arc(r.pt.x, r.pt.y, 2.2, 0, TAU); ctx.fill();
+    ctx.textAlign = r.o.side ? 'right' : 'left';
+    var tx = r.o.side ? lx - 6 : lx + 6;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(3,12,17,.85)';
+    ctx.strokeText(r.txt, tx, ly + 4);
+    ctx.fillStyle = 'rgba(190,248,230,.95)';
+    ctx.fillText(r.txt, tx, ly + 4);
+  }
+  ctx.restore();
+}
+/* ================= environment ================= */
+var cw = 0, ch = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cw = window.innerWidth; ch = window.innerHeight;
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+  cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+}
+window.addEventListener('resize', resize);
+resize();
+function blot(x, y, r, c) {
+  var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, c);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function drawBG(t) {
+  var g = ctx.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, '#082430');
+  g.addColorStop(.5, '#051a25');
+  g.addColorStop(1, '#030d15');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, cw, ch);
+  blot(cw * .24 + Math.sin(t * .03) * 90, ch * .32 + Math.cos(t * .023) * 60, cw * .38, 'rgba(24,110,112,.10)');
+  blot(cw * .8 + Math.cos(t * .026) * 70, ch * .72, cw * .3, 'rgba(255,140,90,.045)');
+  blot(cw * .6, ch * .18 + Math.sin(t * .02) * 50, cw * .26, 'rgba(30,140,120,.06)');
+  for (var i = 0; i < motesB.length; i++) {
+    var m = motesB[i];
+    var x = ((m.x * cw + t * m.sp * m.z) % (cw + 30) + cw + 30) % (cw + 30) - 15;
+    var y = ((m.y * ch + Math.sin(t * .2 + m.ph) * 16) % (ch + 30) + ch + 30) % (ch + 30) - 15;
+    ctx.globalAlpha = .05 + .08 * m.z;
+    ctx.fillStyle = 'rgba(180,230,215,1)';
+    ctx.beginPath(); ctx.arc(x, y, .7 + 1.5 * m.z, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function drawFrame() {
+  var v = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .36, cw / 2, ch / 2, Math.max(cw, ch) * .72);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, 'rgba(2,8,12,.6)');
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = 'rgba(200,240,230,.2)';
+  ctx.lineWidth = 1.5;
+  var L = 22, o = 20;
+  ctx.beginPath();
+  ctx.moveTo(o, o + L); ctx.lineTo(o, o); ctx.lineTo(o + L, o);
+  ctx.moveTo(cw - o - L, o); ctx.lineTo(cw - o, o); ctx.lineTo(cw - o, o + L);
+  ctx.moveTo(cw - o, ch - o - L); ctx.lineTo(cw - o, ch - o); ctx.lineTo(cw - o - L, ch - o);
+  ctx.moveTo(o + L, ch - o); ctx.lineTo(o, ch - o); ctx.lineTo(o, ch - o - L);
+  ctx.stroke();
+  var sx = 64, sy = 122;
+  ctx.strokeStyle = 'rgba(200,240,230,.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy); ctx.lineTo(sx + 84, sy);
+  ctx.moveTo(sx, sy - 4); ctx.lineTo(sx, sy + 4);
+  ctx.moveTo(sx + 84, sy - 4); ctx.lineTo(sx + 84, sy + 4);
+  ctx.stroke();
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(200,240,230,.45)';
+  ctx.fillText('1 µm', sx + 32, sy - 7);
+  for (var i = 0; i < motesF.length; i++) {
+    var m = motesF[i];
+    var x = ((m.x * cw + i * 373) % (cw + 40) + cw + 40) % (cw + 40) - 20;
+    var y = ((m.y * ch + i * 211) % (ch + 40) + ch + 40) % (ch + 40) - 20;
+    ctx.globalAlpha = .14;
+    ctx.fillStyle = 'rgba(180,230,215,1)';
+    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+/* ================= master render (pure fn of t) ================= */
+function render(t) {
+  var fa = Math.max(1 - seg(t, 0, 1.4), seg(t, SCN - 1, SCN));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  /* during the end-card hold the scene is fully faded out — skip the work */
+  if (fa >= 1) {
+    ctx.fillStyle = 'rgb(2,8,12)';
+    ctx.fillRect(0, 0, cw, ch);
+    return;
+  }
+  ctx.lineJoin = 'round';
+  drawBG(t);
+  var s = Math.min(cw / W, ch / H);
+  ctx.save();
+  ctx.translate((cw - W * s) / 2, (ch - H * s) / 2);
+  ctx.scale(s, s);
+  drawBgP(t);
+  for (var i = 0; i < BACT.length; i++) drawBact(BACT[i], t);
+  drawP0(t);
+  drawG2(t);
+  drawG3(t);
+  drawFx(t);
+  drawAnno(t);
+  ctx.restore();
+  drawFrame();
+  if (fa > 0) {
+    ctx.fillStyle = 'rgba(2,8,12,' + fa + ')';
+    ctx.fillRect(0, 0, cw, ch);
+  }
+}
+/* ================= sound ================= */
+/* overall loudness. every cue is mixed relative to this, so change the one
+   number to move the whole soundtrack. the limiter after it stops the louder
+   cues (lysis 'pop', overlapping bursts) from clipping at high gain. */
+var SFX_GAIN = 3.2;
+var sfx = {
+  on: false, ctx: null,
+  init: function () {
+    var C = this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.master = C.createGain();
+    this.master.gain.value = SFX_GAIN;
+    var lim = C.createDynamicsCompressor();
+    lim.threshold.value = -8;
+    lim.knee.value = 6;
+    lim.ratio.value = 12;
+    lim.attack.value = .003;
+    lim.release.value = .12;
+    this.master.connect(lim);
+    lim.connect(C.destination);
+    var len = 2 * C.sampleRate;
+    var buf = C.createBuffer(1, len, C.sampleRate);
+    var d = buf.getChannelData(0);
+    var l = 0;
+    for (var i = 0; i < len; i++) { l = l * .98 + (Math.random() * 2 - 1) * .02; d[i] = l * 3; }
+    var src = C.createBufferSource();
+    src.buffer = buf; src.loop = true;
+    var f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 240;
+    var g = C.createGain(); g.gain.value = .045;
+    src.connect(f); f.connect(g); g.connect(this.master); src.start();
+    var lfo = C.createOscillator(); lfo.frequency.value = .07;
+    var lg = C.createGain(); lg.gain.value = 70;
+    lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+    this.nb = C.createBuffer(1, C.sampleRate, C.sampleRate);
+    var nd = this.nb.getChannelData(0);
+    for (i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  },
+  env: function (type, f0, f1, dur, vol) {
+    if (!this.ctx) return;
+    var C = this.ctx, n = C.currentTime;
+    var o = C.createOscillator(), g = C.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, n);
+    o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), n + dur);
+    g.gain.setValueAtTime(vol, n);
+    g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+    o.connect(g); g.connect(this.master);
+    o.start(n); o.stop(n + dur + .05);
+  },
+  nz: function (dur, f0, f1, vol) {
+    if (!this.ctx) return;
+    var C = this.ctx, n = C.currentTime;
+    var s = C.createBufferSource(); s.buffer = this.nb;
+    var f = C.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1;
+    f.frequency.setValueAtTime(f0, n);
+    f.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    var g = C.createGain();
+    g.gain.setValueAtTime(vol, n);
+    g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(n); s.stop(n + dur + .05);
+  },
+  play: function (n) {
+    if (!this.on || !this.ctx) return;
+    switch (n) {
+      case 'tick': this.env('sine', 1300, 650, .09, .12); break;
+      case 'tickSoft': this.env('sine', 900, 700, .07, .06); break;
+      case 'fire': this.env('square', 220, 90, .12, .1); break;
+      case 'whoosh': this.nz(.5, 300, 1800, .07); break;
+      case 'pop': this.env('sine', 170, 45, .3, .3); this.nz(.15, 900, 200, .12); break;
+      case 'popS': this.env('sine', 150, 50, .22, .14); break;
+      case 'shimmer':
+        var self = this;
+        [1900, 2500, 3200].forEach(function (f, i) {
+          setTimeout(function () { self.env('sine', f, f * .9, .25, .05); }, i * 90);
+        });
+        break;
+      case 'ui': this.env('square', 300, 260, .04, .04); break;
+    }
+  }
+};
+var EVENTS = [
+  { t: 4.6, f: 'tick' }, { t: 8.6, f: 'fire' }, { t: 10.7, f: 'whoosh' }, { t: 34, f: 'tickSoft' },
+  { t: 49.8, f: 'pop' }, { t: 50.9, f: 'shimmer' }, { t: 66.5, f: 'popS' }, { t: 67.7, f: 'popS' },
+  { t: 68.9, f: 'popS' }, { t: 69.7, f: 'shimmer' }
+];
+function fireBetween(a, b) {
+  if (!sfx.on) return;
+  for (var i = 0; i < EVENTS.length; i++) {
+    var e = EVENTS[i];
+    if (e.t > a && e.t <= b) sfx.play(e.f);
+  }
+}
+/* ================= state & UI ================= */
+var t = 0, playing = !reduced, speed = 1, loop = true;
+var stepsEl = document.getElementById('steps');
+var fillEl = document.getElementById('fill');
+var thumbEl = document.getElementById('thumb');
+var tipEl = document.getElementById('tip');
+var trackEl = document.getElementById('track');
+var tcodeEl = document.getElementById('tcode');
+var playBtn = document.getElementById('play');
+var capb = document.getElementById('capb');
+var capn = document.getElementById('capn');
+var capT = document.getElementById('capT');
+var capD = document.getElementById('capD');
+var endEl = document.getElementById('end');
+var vP = document.getElementById('vP');
+var vL = document.getElementById('vL');
+var vG = document.getElementById('vG');
+var loopB = document.getElementById('loopB');
+var sndB = document.getElementById('sndB');
+var scrubEl = document.getElementById('scrub');
+var spdsEl = document.getElementById('spds');
+function fmt(x) {
+  x = Math.max(0, Math.round(x));
+  var mm = Math.floor(x / 60), ss = x % 60;
+  return (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+}
+function setPlaying(v) { playing = v; }
+function seekTo(v) { t = clamp(v, 0, T); render(t); ui(t); }
+function togglePlay() { if (t >= T - .01) t = 0; setPlaying(!playing); }
+for (var si = 0; si < PH.length; si++) {
+  (function (idx) {
+    var b = document.createElement('button');
+    b.className = 'step';
+    b.innerHTML = '<span class="dot"></span><span class="lbl">' + (idx + 1 < 10 ? '0' : '') + (idx + 1) + ' ' + PH[idx].n + '</span>';
+    b.onclick = function () { seekTo(B[idx] + .02); setPlaying(true); sfx.play('ui'); };
+    stepsEl.appendChild(b);
+  })(si);
+}
+var stepBtns = Array.prototype.slice.call(stepsEl.children);
+for (si = 1; si < 6; si++) {
+  var tk = document.createElement('div');
+  tk.className = 'tick';
+  tk.style.left = (B[si] / T * 100) + '%';
+  trackEl.appendChild(tk);
+}
+var spdBtns = Array.prototype.slice.call(spdsEl.querySelectorAll('button'));
+var curPhase = -1, curPlay = -1;
+function setPhaseUI(i) {
+  for (var j = 0; j < stepBtns.length; j++) {
+    stepBtns[j].classList.toggle('active', j === i);
+    stepBtns[j].classList.toggle('done', j < i);
+  }
+  capn.textContent = (i + 1 < 10 ? '0' : '') + (i + 1);
+  capT.textContent = PH[i].n;
+  capD.textContent = PH[i].d;
+  capb.classList.remove('anim');
+  void capb.offsetWidth;
+  capb.classList.add('anim');
+  sfx.play('ui');
+}
+function setVal(el, v) {
+  if (el.textContent !== String(v)) {
+    el.textContent = v;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+}
+function ui(t2) {
+  tcodeEl.textContent = fmt(t2) + ' / ' + fmt(T);
+  var pct = t2 / T * 100;
+  fillEl.style.width = pct + '%';
+  thumbEl.style.left = pct + '%';
+  var pi = 0, i;
+  for (i = 5; i >= 0; i--) if (t2 >= B[i]) { pi = i; break; }
+  if (pi !== curPhase) { curPhase = pi; setPhaseUI(pi); }
+  setVal(vP, t2 < 49.5 ? 0 : (t2 < 66.5 ? 50 : (t2 < 67.7 ? 100 : (t2 < 68.9 ? 150 : 200))));
+  setVal(vL, t2 < 49.5 ? 0 : (t2 < 66.5 ? 1 : (t2 < 67.7 ? 2 : (t2 < 68.9 ? 3 : 4))));
+  setVal(vG, t2 < 55 ? 'I' : (t2 < 66.5 ? 'II' : 'III'));
+  /* end card: up from ~69.6, held through the 30 s tail, off just before the loop */
+  endEl.style.opacity = seg(t2, 68.5, 69.6) * (1 - seg(t2, T - 1, T - .2));
+  if (playing !== curPlay) { curPlay = playing; playBtn.classList.toggle('on', playing); }
+}
+playBtn.onclick = togglePlay;
+cv.onclick = togglePlay;
+loopB.onclick = function () { loop = !loop; loopB.classList.toggle('on', loop); sfx.play('ui'); };
+sndB.onclick = function () {
+  sfx.on = !sfx.on;
+  if (sfx.on) {
+    if (!sfx.ctx) sfx.init();
+    if (sfx.ctx.resume) sfx.ctx.resume();
+    sfx.play('tick');
+  }
+  sndB.classList.toggle('on', sfx.on);
+  var w1 = sndB.querySelector('.w1'), w2 = sndB.querySelector('.w2');
+  if (w1) w1.setAttribute('opacity', sfx.on ? 1 : .25);
+  if (w2) w2.setAttribute('opacity', sfx.on ? 1 : .25);
+};
+for (si = 0; si < spdBtns.length; si++) {
+  (function (btn) {
+    btn.onclick = function () {
+      speed = parseFloat(btn.getAttribute('data-s'));
+      for (var j = 0; j < spdBtns.length; j++) spdBtns[j].classList.toggle('on', spdBtns[j] === btn);
+      sfx.play('ui');
+    };
+  })(spdBtns[si]);
+}
+window.addEventListener('keydown', function (e) {
+  if (e.code === 'Space') {
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    e.preventDefault();
+    togglePlay();
+  } else if (e.key === 'ArrowRight') {
+    seekTo(t + 4);
+  } else if (e.key === 'ArrowLeft') {
+    seekTo(t - 4);
+  } else if (e.key === '1') spdBtns[0].click();
+  else if (e.key === '2') spdBtns[1].click();
+  else if (e.key === '3') spdBtns[2].click();
+  else if (e.key.toLowerCase() === 'l') loopB.click();
+});
+var dragging = false;
+function scrubTo(e) {
+  var r = trackEl.getBoundingClientRect();
+  seekTo(c01((e.clientX - r.left) / r.width) * T);
+}
+scrubEl.addEventListener('pointerdown', function (e) {
+  dragging = true;
+  if (scrubEl.setPointerCapture) scrubEl.setPointerCapture(e.pointerId);
+  scrubTo(e);
+});
+scrubEl.addEventListener('pointermove', function (e) {
+  var r = trackEl.getBoundingClientRect();
+  var x = clamp(e.clientX - r.left, 0, r.width);
+  var tv = x / r.width * T;
+  var pi = 0, i;
+  for (i = 5; i >= 0; i--) if (tv >= B[i]) { pi = i; break; }
+  tipEl.textContent = (pi + 1 < 10 ? '0' : '') + (pi + 1) + ' · ' + PH[pi].n + ' — ' + fmt(tv);
+  tipEl.style.left = clamp(x, 50, r.width - 50) + 'px';
+  tipEl.classList.add('show');
+  if (dragging) scrubTo(e);
+});
+scrubEl.addEventListener('pointerup', function () { dragging = false; });
+scrubEl.addEventListener('pointerleave', function () { if (!dragging) tipEl.classList.remove('show'); });
+/* ================= main loop ================= */
+var last = performance.now();
+function frame(now) {
+  var dt = Math.min(.05, (now - last) / 1000);
+  last = now;
+  if (playing) {
+    var nt = t + dt * speed;
+    if (nt >= T) {
+      if (loop) {
+        fireBetween(t, T);
+        t = nt - T;
+      } else {
+        t = T;
+        playing = false;
+      }
+    } else {
+      fireBetween(t, nt);
+      t = nt;
+    }
+  }
+  render(t);
+  ui(t);
+  requestAnimationFrame(frame);
+}
+setPhaseUI(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

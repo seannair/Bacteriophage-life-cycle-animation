@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--
+  Bacteriophage life cycles — index
+  Copyright (c) 2026 Sean Nair · https://github.com/seannair/Bacteriophage-life-cycle-animation
+
+  Dual licensed. The code (engine, timeline, audio, layout) is MIT.
+  The content (captions, labels, visual design, and any capture of the
+  animation) is CC BY 4.0 — credit required. See LICENSE in the repository.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bacteriophage life cycles</title>
+<meta name="description" content="Two animated timelapses of bacteriophage infection — the lytic cycle of a T4-like phage and the lysogenic cycle of phage lambda.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#eaf6f2; --dim:#9db8b1; --faint:#557a72;
+  --mint:#5fe8c6; --mint2:#a4f5de; --amber:#ffb26b;
+  --viol:#b49bff; --viol2:#d3c4ff;
+  --line:rgba(140,220,200,.16);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{min-height:100%;background:#04101a;color:var(--ink);
+ font-family:"Instrument Sans",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+ background-image:radial-gradient(1200px 700px at 22% 8%,rgba(24,110,112,.16),transparent 60%),
+                  radial-gradient(1000px 600px at 84% 78%,rgba(150,110,255,.10),transparent 62%),
+                  linear-gradient(180deg,#082430 0%,#051a25 45%,#030d15 100%);
+ background-attachment:fixed}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.05;z-index:0;
+ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2"/></filter><rect width="220" height="220" filter="url(%23n)"/></svg>')}
+.marks{position:fixed;inset:20px;pointer-events:none;z-index:1}
+.marks span{position:absolute;width:22px;height:22px;border:1.5px solid rgba(200,240,230,.2)}
+.marks span:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}
+.marks span:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}
+.marks span:nth-child(3){bottom:0;right:0;border-left:0;border-top:0}
+.marks span:nth-child(4){bottom:0;left:0;border-right:0;border-top:0}
+.wrap{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:76px 32px 88px}
+header{display:flex;gap:15px;align-items:center;margin-bottom:14px}
+header svg{width:38px;height:38px;flex:none}
+.tag{display:block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.24em;color:var(--dim);margin-bottom:6px}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,4.4vw,46px);
+ letter-spacing:-.02em;line-height:1.02}
+h1 em{font-style:normal;color:var(--mint)}
+.lede{max-width:62ch;color:#bcd6cf;font-size:16px;line-height:1.6;margin:22px 0 44px}
+.lede strong{color:var(--ink);font-weight:600}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:26px}
+.card{display:flex;flex-direction:column;text-decoration:none;color:inherit;
+ background:rgba(6,19,25,.72);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+ transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.card:hover{transform:translateY(-4px);border-color:rgba(95,232,198,.45);
+ box-shadow:0 16px 46px rgba(0,0,0,.45),0 0 0 1px rgba(95,232,198,.12)}
+.card.v:hover{border-color:rgba(180,155,255,.5);box-shadow:0 16px 46px rgba(0,0,0,.45),0 0 0 1px rgba(180,155,255,.14)}
+.shot{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:50% 42%;
+ border-bottom:1px solid var(--line);background:#04101a}
+.body{padding:20px 22px 24px;display:flex;flex-direction:column;gap:11px;flex:1}
+.kick{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.22em;color:var(--mint)}
+.card.v .kick{color:var(--viol)}
+h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;letter-spacing:-.01em}
+.card p{font-size:13.5px;line-height:1.58;color:#c2d8d2;flex:1}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:2px}
+.pill{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.1em;color:var(--dim);
+ border:1px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap}
+.go{display:inline-flex;align-items:center;gap:8px;font:500 11.5px "IBM Plex Mono",monospace;
+ letter-spacing:.14em;color:var(--mint);margin-top:6px}
+.card.v .go{color:var(--viol2)}
+.go svg{width:14px;height:14px}
+.note{margin-top:46px;padding-top:26px;border-top:1px solid var(--line);
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:26px}
+.note h3{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.22em;color:var(--dim);margin-bottom:10px}
+.note p{font-size:13px;line-height:1.62;color:#a9c2bc}
+.note code{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--mint2);
+ background:rgba(95,232,198,.08);border-radius:4px;padding:1px 5px}
+.note a{color:var(--mint2)}
+footer{margin-top:40px;font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.14em;color:var(--faint)}
+footer a{color:var(--dim);text-decoration:none;border-bottom:1px solid rgba(157,184,177,.3)}
+footer a:hover{color:var(--ink)}
+a:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+@media (max-width:640px){ .wrap{padding:52px 20px 64px} }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+<div class="marks"><span></span><span></span><span></span><span></span></div>
+<div class="wrap">
+  <header>
+    <svg viewBox="0 0 40 40" fill="none" stroke="#5fe8c6" stroke-width="1.6" stroke-linejoin="round">
+      <polygon points="20,3 28.5,8 28.5,18 20,23 11.5,18 11.5,8"/>
+      <rect x="16" y="23.5" width="8" height="2.6" fill="#5fe8c6" stroke="none"/>
+      <rect x="18.8" y="26.1" width="2.4" height="8" fill="#5fe8c6" stroke="none"/>
+      <path d="M18.5 34 L13 39 M21.5 34 L27 39 M20 34.5 L20 39.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <span class="tag">TEACHING ANIMATIONS · CANVAS · NO DEPENDENCIES</span>
+      <h1>Bacteriophage <em>life cycles</em></h1>
+    </div>
+  </header>
+
+  <p class="lede">Two animated timelapses of phage infection, each a single self-contained HTML file
+  that runs in any browser. Both are scrubbable and pausable, name the molecules at every step, and
+  say plainly where the picture is <strong>not</strong> to scale.</p>
+
+  <div class="cards">
+    <a class="card" href="phage%20lytic%20cycle.html">
+      <img class="shot" src="docs/screenshot.png" alt="The lytic cycle: progeny phage scattering from a burst E. coli cell">
+      <div class="body">
+        <span class="kick">01 · A T4-LIKE PHAGE × E. COLI</span>
+        <h2>The Lytic Cycle</h2>
+        <p>Infect, take over, burst. Tail fibers find their receptor, the sheath fires, the host
+        genome is shredded, fifty new particles self-assemble, and lysins open the cell from the
+        inside. Then it happens again, in three more cells.</p>
+        <div class="meta">
+          <span class="pill">6 PHASES</span><span class="pill">1:42</span><span class="pill">BURST ≈50</span>
+        </div>
+        <span class="go">WATCH
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        </span>
+      </div>
+    </a>
+
+    <a class="card v" href="phage%20lysogenic%20cycle.html">
+      <img class="shot" src="docs/screenshot-lysogenic.png" alt="The lysogenic cycle: integrase aligning attP with attB inside an E. coli cell">
+      <div class="body">
+        <span class="kick">02 · PHAGE λ × E. COLI K-12</span>
+        <h2>The Lysogenic Cycle</h2>
+        <p>Integrate and wait. The genome circularises on its cos ends, cI beats Cro, integrase
+        stitches the phage into the host chromosome, and the prophage rides four generations of
+        cell division — until UV light cuts the repressor in half.</p>
+        <div class="meta">
+          <span class="pill">8 PHASES</span><span class="pill">2:34</span><span class="pill">BURST ≈100</span>
+        </div>
+        <span class="go">WATCH
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"/></svg>
+        </span>
+      </div>
+    </a>
+  </div>
+
+  <div class="note">
+    <div>
+      <h3>CONTROLS</h3>
+      <p><code>Space</code> or click the canvas to play and pause. <code>←</code> <code>→</code> to
+      seek four seconds. <code>1</code> <code>2</code> <code>3</code> for 0.5×, 1× and 2×.
+      <code>L</code> toggles looping. The phase names along the top are clickable.</p>
+    </div>
+    <div>
+      <h3>SOUND</h3>
+      <p>Off by default — the speaker icon in the transport bar turns on a procedural soundtrack
+      built in the Web Audio API. There are no audio files to load.</p>
+    </div>
+    <div>
+      <h3>USING THEM</h3>
+      <p>Download either file and it works offline, straight from the filesystem. Nothing is
+      tracked, nothing phones home, and the only network request is a fonts stylesheet it degrades
+      without. See the <a href="https://github.com/seannair/Bacteriophage-life-cycle-animation#readme">README</a>
+      for where each animation simplifies the biology.</p>
+    </div>
+  </div>
+
+  <footer>SEAN NAIR ·
+    <a href="https://github.com/seannair/Bacteriophage-life-cycle-animation">SOURCE ON GITHUB</a>
+  </footer>
+</div>
+</body>
+</html>

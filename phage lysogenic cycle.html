@@ -1,0 +1,1431 @@
+<!DOCTYPE html>
+<!--
+  Bacteriophage life cycles — The Lysogenic Cycle
+  Copyright (c) 2026 Sean Nair · https://github.com/seannair/Bacteriophage-life-cycle-animation
+
+  Dual licensed. The code (engine, timeline, audio, layout) is MIT.
+  The content (captions, labels, visual design, and any capture of the
+  animation) is CC BY 4.0 — credit required. See LICENSE in the repository.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Lysogenic Cycle — phage λ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#eaf6f2; --dim:#9db8b1; --faint:#557a72;
+  --mint:#5fe8c6; --mint2:#a4f5de; --amber:#ffb26b; --coral:#ff8a5c;
+  --viol:#b49bff; --viol2:#d3c4ff;
+  --line:rgba(140,220,200,.16); --panel:rgba(6,19,25,.92);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{background:#04101a;color:var(--ink);font-family:"Instrument Sans",system-ui,sans-serif;overflow:hidden}
+canvas#cv{position:fixed;inset:0;display:block;cursor:pointer}
+.grain{position:fixed;inset:0;pointer-events:none;opacity:.05;
+ background-image:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="220" height="220"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2"/></filter><rect width="220" height="220" filter="url(%23n)"/></svg>')}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+/* ---------- top bar ---------- */
+.top{position:fixed;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:flex-start;
+ padding:18px 28px;pointer-events:none;z-index:5}
+.brand{display:flex;gap:13px;align-items:center;pointer-events:auto;animation:drop .8s .1s both;flex:none}
+.brand svg{width:34px;height:34px;flex:none}
+.tag{display:block;font:500 10px "IBM Plex Mono",monospace;letter-spacing:.22em;color:var(--dim);margin-bottom:5px;white-space:nowrap}
+h1{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(20px,2.6vw,30px);letter-spacing:-.01em;line-height:1}
+h1 em{font-style:normal;color:var(--viol)}
+.steps{display:flex;gap:14px;pointer-events:auto;animation:drop .8s .25s both;flex-wrap:nowrap;justify-content:flex-end}
+.step{display:flex;align-items:center;gap:7px;background:none;border:0;cursor:pointer;padding:6px 2px}
+.step .dot{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--mint);opacity:.35;transition:all .3s}
+.step .lbl{font:500 10px "IBM Plex Mono",monospace;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);transition:color .3s;white-space:nowrap}
+.step:hover .dot{opacity:.9}
+.step.done .dot{background:var(--mint);opacity:.85}
+.step.done .lbl{color:var(--dim)}
+.step.active .dot{opacity:1;box-shadow:0 0 0 4px rgba(95,232,198,.18);animation:pulse 2s infinite}
+.step.active .lbl{color:var(--ink)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 4px rgba(95,232,198,.18)}50%{box-shadow:0 0 0 7px rgba(95,232,198,.05)}}
+@keyframes drop{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+/* ---------- caption ---------- */
+.cap{position:fixed;left:28px;bottom:104px;display:flex;gap:18px;align-items:flex-start;max-width:470px;
+ padding-right:30px;background:linear-gradient(90deg,rgba(3,12,17,.86),rgba(3,12,17,0));z-index:5}
+.capn{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:52px;line-height:.9;
+ color:transparent;-webkit-text-stroke:1.5px rgba(180,155,255,.75);flex:none}
+.capb h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:23px;letter-spacing:-.01em;margin-bottom:7px}
+.capb p{font-size:13.5px;line-height:1.55;color:#cfe3dd;max-width:44ch}
+.capb.anim{animation:capin .5s both}
+@keyframes capin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* ---------- telemetry ---------- */
+.tele{position:fixed;right:28px;top:104px;width:276px;padding:2px 0 12px 26px;background:linear-gradient(270deg,rgba(3,12,17,.82) 55%,rgba(3,12,17,0));font-family:"IBM Plex Mono",monospace;z-index:5;animation:drop .8s .4s both}
+.t-h{display:flex;align-items:center;gap:9px;font-size:10px;letter-spacing:.32em;color:var(--dim);margin-bottom:14px}
+.pulse{width:7px;height:7px;border-radius:50%;background:var(--mint);box-shadow:0 0 9px var(--mint);animation:blink 1.6s infinite}
+@keyframes blink{50%{opacity:.25}}
+.row{display:flex;align-items:baseline;gap:8px;font-size:11px;letter-spacing:.06em;color:#7ea79d;margin-bottom:9px}
+.row .lead{flex:1;border-bottom:1px dotted rgba(126,167,157,.3);transform:translateY(-3px)}
+.row .v{color:var(--ink);font-weight:500;font-size:13px;white-space:nowrap}
+.row .v.pop{animation:pop .45s}
+.row .v.vi{color:var(--viol2)}
+@keyframes pop{40%{transform:scale(1.35);color:var(--mint2)}}
+.note{margin-top:10px;font-size:9.5px;letter-spacing:.05em;color:var(--faint);line-height:1.6}
+.hint{margin-top:10px;font-size:9.5px;letter-spacing:.08em;color:var(--faint);line-height:1.7}
+/* ---------- end card ---------- */
+.end{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+ text-align:center;pointer-events:none;opacity:0;z-index:6;padding:0 20px}
+.ebig{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(38px,6.6vw,80px);letter-spacing:-.02em}
+.ebig i{font-style:normal;color:var(--viol);padding:0 .1em}
+.end p{max-width:54ch;color:#bcd6cf;font-size:15px;line-height:1.55}
+.emono{font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.35em;color:var(--mint)}
+/* ---------- transport deck ---------- */
+.deck{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:min(980px,calc(100% - 28px));
+ display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--panel);
+ border:1px solid var(--line);border-radius:12px;z-index:7;animation:rise .8s .3s both}
+@keyframes rise{from{opacity:0;transform:translate(-50%,16px)}to{opacity:1;transform:translate(-50%,0)}}
+.play{width:46px;height:46px;border-radius:50%;border:0;background:var(--mint);color:#04222b;cursor:pointer;
+ display:grid;place-items:center;transition:transform .15s,box-shadow .15s;flex:none}
+.play:hover{transform:scale(1.07);box-shadow:0 0 22px rgba(95,232,198,.45)}
+.play svg{width:18px;height:18px}
+.play .bars{display:none}
+.play.on .tri{display:none}
+.play.on .bars{display:block}
+.tcode{font:500 12.5px "IBM Plex Mono",monospace;color:var(--dim);min-width:118px;flex:none}
+.scrub{position:relative;flex:1;min-width:120px;height:26px;display:flex;align-items:center;cursor:pointer}
+.track{position:relative;width:100%;height:6px;border-radius:3px;background:#0e2831}
+.fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:linear-gradient(90deg,#2c9c82,var(--mint));width:0}
+.tick{position:absolute;top:-4px;width:2px;height:14px;background:rgba(255,178,107,.55)}
+.thumb{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:var(--mint);
+ border:2.5px solid #04222b;transform:translate(-50%,-50%);left:0;transition:transform .12s;box-shadow:0 0 8px rgba(95,232,198,.5)}
+.scrub:hover .thumb{transform:translate(-50%,-50%) scale(1.25)}
+.tip{position:absolute;bottom:26px;transform:translateX(-50%);background:#0a222b;border:1px solid var(--line);
+ font:500 10.5px "IBM Plex Mono",monospace;letter-spacing:.06em;color:var(--mint2);padding:5px 9px;border-radius:6px;
+ opacity:0;transition:opacity .15s;pointer-events:none;white-space:nowrap}
+.tip.show{opacity:1}
+.seg3{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+.seg3 button{background:none;border:0;color:var(--dim);font:500 11px "IBM Plex Mono",monospace;padding:7px 11px;cursor:pointer;transition:all .15s}
+.seg3 button:hover{color:var(--ink)}
+.seg3 button.on{background:var(--mint);color:#04222b}
+.ico{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:none;color:var(--dim);
+ cursor:pointer;display:grid;place-items:center;transition:all .15s;flex:none}
+.ico svg{width:17px;height:17px}
+.ico:hover{color:var(--ink);border-color:rgba(140,220,200,.4)}
+.ico.on{color:var(--mint);border-color:rgba(95,232,198,.5);background:rgba(95,232,198,.07)}
+@media (max-width:1430px){
+  .steps .lbl{display:none}
+  .steps{gap:11px}
+}
+@media (max-width:960px){
+  .tele{display:none}
+  .cap{left:16px;right:16px;bottom:92px;max-width:none;padding-right:14px}
+  .capn{font-size:40px}
+  .deck{flex-wrap:wrap;justify-content:center;gap:10px;bottom:10px;width:calc(100% - 20px)}
+  .tcode{order:5;min-width:0}
+}
+@media (max-height:860px){
+  .cap{bottom:96px;max-width:580px}
+  .capn{font-size:42px}
+  .capb h2{font-size:20px;margin-bottom:5px}
+  .capb p{font-size:12.5px;line-height:1.45;max-width:58ch}
+}
+@media (prefers-reduced-motion:reduce){
+  .pulse,.step.active .dot{animation:none}
+}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="grain"></div>
+<header class="top">
+  <div class="brand">
+    <svg viewBox="0 0 40 40" fill="none" stroke="#b49bff" stroke-width="1.6" stroke-linejoin="round">
+      <polygon points="20,3 27.5,7.5 27.5,16.5 20,21 12.5,16.5 12.5,7.5"/>
+      <path d="M20 21.5 C20 27, 23 29, 21.5 34" stroke-linecap="round"/>
+      <path d="M21.5 34 L17 37.5 M21.5 34 L21.5 38.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <span class="tag">PHAGE λ × E. COLI K-12 · TIMELAPSE</span>
+      <h1>The <em>Lysogenic</em> Cycle</h1>
+    </div>
+  </div>
+  <nav class="steps" id="steps" aria-label="Phases"></nav>
+</header>
+<aside class="tele">
+  <div class="t-h"><span class="pulse"></span>LIVE READOUT</div>
+  <div class="row"><span>Genome state</span><span class="lead"></span><span class="v" id="vS">free</span></div>
+  <div class="row"><span>Prophage copies</span><span class="lead"></span><span class="v vi" id="vP">0</span></div>
+  <div class="row"><span>Host generation</span><span class="lead"></span><span class="v" id="vG">0</span></div>
+  <div class="row"><span>cI repressor</span><span class="lead"></span><span class="v" id="vC">—</span></div>
+  <div class="row"><span>Burst / cell</span><span class="lead"></span><span class="v">≈100</span></div>
+  <div class="note">λ genome 48,502 bp — about 1 % of the 4.6 Mb host chromosome. The prophage is drawn far larger than that so it can be seen.</div>
+  <div class="hint">SPACE play &nbsp;·&nbsp; ← → seek<br>1 2 3 speed &nbsp;·&nbsp; L loop &nbsp;·&nbsp; click canvas</div>
+</aside>
+<section class="cap">
+  <span class="capn" id="capn">01</span>
+  <div class="capb" id="capb">
+    <h2 id="capT">Adsorption</h2>
+    <p id="capD"></p>
+  </div>
+</section>
+<div class="end" id="end">
+  <div class="ebig">1 <i>→</i> 2 <i>→</i> 4 <i>→</i> ∞</div>
+  <p>Lysogeny is patience. The prophage builds nothing and spends nothing: it is copied for free with the host chromosome and inherited by every descendant, silent for thousands of generations. Then the DNA is damaged, the repressor is cut in half, and the same genome that cost the cell nothing costs it everything.</p>
+  <span class="emono">LOOP · THE TAPE REWINDS</span>
+</div>
+<footer class="deck">
+  <button class="play" id="play" aria-label="Play / pause">
+    <svg class="tri" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg>
+    <svg class="bars" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1"/><rect x="14" y="4.5" width="4" height="15" rx="1"/></svg>
+  </button>
+  <span class="tcode" id="tcode">00:00 / 02:34</span>
+  <div class="scrub" id="scrub" aria-label="Timeline">
+    <div class="track" id="track"><div class="fill" id="fill"></div><div class="thumb" id="thumb"></div></div>
+    <div class="tip" id="tip"></div>
+  </div>
+  <div class="seg3" id="spds">
+    <button data-s="0.5">0.5×</button><button data-s="1" class="on">1×</button><button data-s="2">2×</button>
+  </div>
+  <button class="ico on" id="loopB" aria-label="Loop">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+  </button>
+  <button class="ico" id="sndB" aria-label="Sound">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 5 6 9H2v6h4l5 4z"/><path class="w1" opacity="0.25" d="M15.5 8.5a5 5 0 0 1 0 7"/><path class="w2" opacity="0.25" d="M18.5 5.5a9.5 9.5 0 0 1 0 13"/></svg>
+  </button>
+</footer>
+<noscript><p style="position:fixed;top:50%;width:100%;text-align:center">This animation needs JavaScript.</p></noscript>
+<script>
+'use strict';
+/* ================= core ================= */
+var cv = document.getElementById('cv');
+var ctx = cv.getContext('2d');
+var SCN = 124, HOLD = 30, T = SCN + HOLD, W = 1600, H = 1000, TAU = Math.PI * 2;
+var B = [0, 8, 18, 27, 41, 56, 88, 100];
+var PH = [
+  { n: 'Adsorption', s: 'Adsorption',
+    d: 'Lambda’s tail-tip protein J binds LamB — the maltose porin in the outer membrane. A different lock from the one T4 picks, and the reason λ infects E. coli K-12 and very little else.' },
+  { n: 'Injection', s: 'Injection',
+    d: 'No contractile sheath. Lambda’s tail is long, thin and flexible, and the genome is driven down it into the cytoplasm while the empty capsid stays outside — 48,502 base pairs of linear double-stranded DNA.' },
+  { n: 'Circularisation', s: 'Circularise',
+    d: 'Each end of the genome carries a 12-nucleotide single-stranded overhang: the cos sites. They are complementary, so the two ends base-pair and host DNA ligase seals the nicks. The genome is now a covalently closed circle — and only now can it integrate.' },
+  { n: 'The Decision', s: 'Decision',
+    d: 'CII protein activates transcription of cI, the lambda repressor; host proteases (FtsH) destroy CII as fast as it is made. If enough CII survives — favoured by a high multiplicity of infection and a starved host — cI accumulates, dimerises and occupies the Oᴿ operators, shutting the lytic genes down. Had Cro won the race instead, this would be the lytic film.' },
+  { n: 'Integration', s: 'Integration',
+    d: 'Integrase (Int), helped by the host bending protein IHF, aligns attP on the phage circle with attB on the bacterial chromosome — a single site, between the gal and bio operons. Site-specific recombination swaps the strands and the phage genome becomes part of the host chromosome: a prophage, flanked by the hybrid sites attL and attR.' },
+  { n: 'Lysogeny', s: 'Lysogeny',
+    d: 'Silent, but not gone. cI represses the lytic genes and the prophage is copied passively with the host chromosome at every division, so every descendant inherits it. Cytoplasmic cI also shuts down any second λ that infects — superinfection immunity. Lysogenic conversion: the prophage carries genes of its own and the host expresses them. The Shiga toxin that makes E. coli O157:H7 dangerous is phage DNA in a lambdoid prophage like this one, and an ordinary gut E. coli becomes a pathogen the day one arrives. Diphtheria toxin works the same way.' },
+  { n: 'Induction', s: 'Induction',
+    d: 'DNA damage — UV light, mitomycin C — triggers the SOS response. RecA polymerises on single-stranded DNA and becomes a co-protease, stimulating cI to cleave itself in half. The repressor concentration collapses, Cro takes over the operators, and the lytic genes fire at last. Induction is never total: some lysogens stay lysogens.' },
+  { n: 'Excision & Lysis', s: 'Excision',
+    d: 'Xis together with Int runs the reaction backwards, cutting attL and attR to excise the circle. Replication switches to rolling-circle, spinning out a concatemer that is cut at every cos site as it is packaged. The cell lyses — around a hundred phage. Occasionally the excision is imprecise and carries off gal or bio: specialised transduction.' }
+];
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function c01(v) { return clamp(v, 0, 1); }
+function seg(t, a, b) { return c01((t - a) / (b - a)); }
+function lerp(a, b, p) { return a + (b - a) * p; }
+function eIO(p) { return p < .5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2; }
+function eO(p) { return 1 - Math.pow(1 - p, 3); }
+function eI(p) { return p * p * p; }
+function eB(p) { var c = 1.70158; return 1 + (c + 1) * Math.pow(p - 1, 3) + c * Math.pow(p - 1, 2); }
+function rng(seed) {
+  var s = seed >>> 0;
+  return function () {
+    s = (s + 0x6D2B79F5) >>> 0;
+    var z = Math.imul(s ^ (s >>> 15), 1 | s);
+    z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
+    return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+  };
+}
+var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ================= timeline constants ================= */
+var CX = 880, CY = 486;                 /* host lineage axis */
+var DUP1 = [57, 62], EL1 = 58, SEP1 = [62.5, 65], SPR1 = [65, 70];
+var DUP2 = [71, 75.5], EL2 = 72, SEP2 = [75.5, 78], SPR2 = [78, 83];
+var GEN2X = [400, 720, 1040, 1360];
+var INT0 = 50, INT1 = 53.5;             /* integration: prophage arc grows */
+var EXC0 = 100.5, EXC1 = 104.5;         /* excision: arc shrinks */
+var UV0 = 88, UV1 = 95.5;               /* UV lamp on / off — a sustained exposure */
+var IND = [1, 2];                       /* which gen-2 cells induce */
+var LYS = [{ i: 1, t0: 114, t1: 117.5, t2: 121.5 }, { i: 2, t0: 115.5, t1: 119, t2: 123 }];
+var ATTB = .06, PROW = .17;             /* prophage arc start / width (u units) */
+/* ================= geometry helpers ================= */
+/* E. coli is a rod with hemispherical poles: a stadium, not a superellipse.
+   radOf inverts it exactly — ray/segment distance, flat flank or end cap. */
+function radOf(hw, hh, th) {
+  var c = Math.abs(Math.cos(th)), s = Math.abs(Math.sin(th));
+  var d = Math.max(0, hw - hh);
+  if (s > 1e-9 && hh * c <= d * s) return hh / s;
+  return d * c + Math.sqrt(Math.max(0, d * d * c * c - d * d + hh * hh));
+}
+function capPt(hw, hh, th) {
+  var r = radOf(hw, hh, th);
+  return { x: r * Math.cos(th), y: r * Math.sin(th) };
+}
+function capPath(hw, hh) {
+  ctx.beginPath();
+  for (var i = 0; i <= 72; i++) {
+    var p = capPt(hw, hh, i / 72 * TAU);
+    if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+  }
+  ctx.closePath();
+}
+function quad(p0, p1, c, p) {
+  var u = 1 - p;
+  return { x: u * u * p0.x + 2 * u * p * c.x + p * p * p1.x, y: u * u * p0.y + 2 * u * p * c.y + p * p * p1.y };
+}
+/* closed wobbly loop — used for the host chromosome and the phage circle alike */
+function loopPt(L, u, t) {
+  var th = u * TAU;
+  var r = 1 + .085 * Math.sin(3 * th + L.ph) + .07 * Math.sin(7 * th - L.ph * 1.4)
+        + .045 * Math.sin(11 * th + L.ph * .7) + .03 * Math.sin(t * .55 + L.ph);
+  return { x: Math.cos(th) * L.rx * r, y: Math.sin(th) * L.ry * r };
+}
+function loopArc(L, t, ua, ub) {
+  var n = Math.max(8, Math.round(Math.abs(ub - ua) * 190));
+  ctx.beginPath();
+  for (var i = 0; i <= n; i++) {
+    var p = loopPt(L, ua + (ub - ua) * i / n, t);
+    if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y);
+  }
+}
+/* ================= scene data ================= */
+var RB = rng(31), BGC = [];
+(function () {
+  var pos = [[280, 220, 74, -.5], [640, 855, 66, .32], [1330, 800, 70, -.22], [180, 640, 58, .9]];
+  for (var i = 0; i < pos.length; i++) {
+    var q = rng(90 + i * 17), ribs = [], k;
+    for (k = 0; k < 12; k++) ribs.push({ x: (q() - .5) * 1.5, y: (q() - .5) * .85, ph: q() * TAU });
+    BGC.push({ x: pos[i][0], y: pos[i][1], hw: pos[i][2] * 1.35, hh: pos[i][2] * .72, rot: pos[i][3],
+      ph: q() * TAU, ribs: ribs, lp: { rx: pos[i][2] * .5, ry: pos[i][2] * .34, ph: q() * TAU, ox: 0, oy: 0 } });
+  }
+})();
+var RM = rng(5), motesB = [], motesF = [];
+for (var ri = 0; ri < 40; ri++) motesB.push({ x: RM(), y: RM(), z: .4 + RM() * .8, sp: 2 + RM() * 6, ph: RM() * TAU });
+for (ri = 0; ri < 14; ri++) motesF.push({ x: RM(), y: RM(), sp: 4 + RM() * 8, ph: RM() * TAU });
+/* ribosome speckle for the main lineage */
+var RR = rng(77), RIBS = [];
+for (ri = 0; ri < 26; ri++) RIBS.push({ x: (RR() - .5) * 1.7, y: (RR() - .5) * .88, ph: RR() * TAU });
+/* decision-phase protein pools */
+var RP = rng(404), CII = [], CI = [], CRO = [];
+for (ri = 0; ri < 9; ri++) CII.push({ x: (RP() - .5) * 300, y: (RP() - .5) * 130, bt: 27.4 + ri * .28, dt: (ri < 3 ? 99 : 31.6 + ri * .35), ph: RP() * TAU });
+for (ri = 0; ri < 16; ri++) CI.push({ x: (RP() - .5) * 320, y: (RP() - .5) * 140, bt: 30.8 + ri * .3, ph: RP() * TAU, pair: ri >> 1 });
+for (ri = 0; ri < 7; ri++) CRO.push({ x: (RP() - .5) * 300, y: (RP() - .5) * 130, bt: 29.6 + ri * .34, dt: 35.4 + ri * .5, ph: RP() * TAU });
+/* burst progeny for the two induced cells */
+var RG = rng(2027), BURST = [];
+for (var bi = 0; bi < LYS.length; bi++) {
+  for (ri = 0; ri < 26; ri++) {
+    BURST.push({ c: LYS[bi].i, sT: LYS[bi].t1 + .1 + (ri / 25) * 1.4, dir: (ri / 26) * TAU + (RG() - .5) * .4,
+      sp: 48 + RG() * 42, ph: RG() * TAU, r0: 10 + RG() * 26 });
+  }
+}
+/* toxin molecules (lysogenic conversion) */
+var RX = rng(88), TOX = [];
+for (ri = 0; ri < 20; ri++) TOX.push({ c: ri % 4, sT: 82.6 + (ri % 5) * .55 + (ri >> 2) * .3,
+  dir: -1.9 + RX() * 3.4, sp: 20 + RX() * 16, ph: RX() * TAU });
+/* ================= host lineage ================= */
+function drift(i, t) { return { x: Math.sin(t * .19 + i * 1.7) * 4, y: Math.cos(t * .23 + i * 2.3) * 3 }; }
+function prophage(t, idx, gen) {
+  if (t < INT0) return null;
+  var u1 = ATTB + PROW * eIO(seg(t, INT0, INT1));
+  if (gen === 2 && IND.indexOf(idx) >= 0) u1 = ATTB + (u1 - ATTB) * (1 - eIO(seg(t, EXC0, EXC1)));
+  return (u1 - ATTB < .002) ? null : [ATTB, u1];
+}
+function activated(t, idx, gen) { return gen === 2 && IND.indexOf(idx) >= 0 && t >= 97.5; }
+function mkCell(idx, gen, x, y, hw, hh, rot, sept, dup, t) {
+  var d = eIO(dup), rx = hw * .40, ry = hh * .58, lps = [];
+  var pro = prophage(t, idx, gen), act = activated(t, idx, gen);
+  lps.push({ ox: -hw * .40 * d, oy: 0, rx: rx * (1 - .13 * d), ry: ry * (1 - .13 * d), ph: 1.1 + idx * .9, pro: pro, act: act, a: 1 });
+  if (d > .02) lps.push({ ox: hw * .40 * d, oy: 0, rx: rx * (1 - .13 * d), ry: ry * (1 - .13 * d), ph: 2.6 + idx * .7, pro: pro, act: act, a: Math.min(1, d * 1.8) });
+  var dr = drift(idx + gen * 4, t);
+  return { x: x + dr.x, y: y + dr.y, hw: hw, hh: hh, rot: rot, sept: sept, loops: lps, idx: idx, gen: gen };
+}
+function cellsAt(t) {
+  var out = [], i;
+  if (t < SEP1[1]) {
+    out.push(mkCell(0, 0, CX, CY, 200 * (1 + .40 * eIO(seg(t, EL1, SEP1[1]))), 105, 0,
+      seg(t, SEP1[0], SEP1[1]), seg(t, DUP1[0], DUP1[1]), t));
+  } else if (t < SEP2[1]) {
+    var sp = lerp(140, 320, eO(seg(t, SPR1[0], SPR1[1])));
+    var hw1 = 140 * (1 + .40 * eIO(seg(t, EL2, SEP2[1])));
+    var hh1 = lerp(92, 96, seg(t, SPR1[0], SPR1[1]));
+    for (i = 0; i < 2; i++) out.push(mkCell(i, 1, CX + (i ? sp : -sp), CY, hw1, hh1, 0,
+      seg(t, SEP2[0], SEP2[1]), seg(t, DUP2[0], DUP2[1]), t));
+  } else {
+    var f = eO(seg(t, SPR2[0], SPR2[1]));
+    var st = [CX - 320 - 98, CX - 320 + 98, CX + 320 - 98, CX + 320 + 98];
+    var dy = [-16, 12, -9, 18], dr = [-.05, .045, -.035, .06];
+    var hw2 = lerp(98, 112, seg(t, SPR2[0], SPR2[1] + 2)), hh2 = lerp(72, 76, f);
+    for (i = 0; i < 4; i++) out.push(mkCell(i, 2, lerp(st[i], GEN2X[i], f), CY + dy[i] * f, hw2, hh2, dr[i] * f, 0, 0, t));
+  }
+  return out;
+}
+var CUR = [];
+function C0() { return CUR.length ? CUR[0] : { x: CX, y: CY, hw: 200, hh: 105, loops: [] }; }
+function cellByIdx(i) { for (var k = 0; k < CUR.length; k++) if (CUR[k].idx === i) return CUR[k]; return C0(); }
+function lysOf(t, c) {
+  if (c.gen !== 2) return { sw: 0, burst: 0 };
+  for (var i = 0; i < LYS.length; i++) if (LYS[i].i === c.idx)
+    return { sw: seg(t, LYS[i].t0, LYS[i].t1), burst: seg(t, LYS[i].t1, LYS[i].t2) };
+  return { sw: 0, burst: 0 };
+}
+/* ================= phage λ glyph ================= */
+function lam(x, y, ang, sc, alpha, o) {
+  o = o || {};
+  if (alpha <= .01) return;
+  ctx.save();
+  ctx.translate(x, y); ctx.rotate(ang); ctx.scale(sc, sc);
+  ctx.globalAlpha *= alpha;
+  var hA = (o.headAlpha !== undefined) ? o.headAlpha : 1;
+  var tl = o.tail !== undefined ? o.tail : 44, bend = o.bend || 0, hR = 12;
+  var col = o.viol ? '186,160,255' : '140,240,215';
+  var cy = -tl - hR * 1.02, i;
+  /* tail fibre(s) — λ carries a single side tail fibre */
+  ctx.strokeStyle = 'rgba(' + col + ',' + (.62 * hA) + ')';
+  ctx.lineWidth = 1.2; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(0, -3);
+  ctx.quadraticCurveTo(-6, -1, o.dock ? -11 : -8, o.dock ? 5 : 8);
+  ctx.stroke();
+  if (o.dock) {
+    ctx.beginPath(); ctx.moveTo(0, -3); ctx.quadraticCurveTo(6, -1, 10, 5); ctx.stroke();
+  }
+  /* conical tip */
+  ctx.fillStyle = 'rgba(' + col + ',' + (.85 * hA) + ')';
+  ctx.beginPath(); ctx.moveTo(0, 1.5); ctx.lineTo(-2.6, -4.5); ctx.lineTo(2.6, -4.5); ctx.closePath(); ctx.fill();
+  /* long flexible non-contractile tail */
+  var c1 = { x: bend, y: -tl * .5 };
+  ctx.strokeStyle = 'rgba(' + col + ',' + (.55 * hA) + ')';
+  ctx.lineWidth = 4.4;
+  ctx.beginPath(); ctx.moveTo(0, -4); ctx.quadraticCurveTo(c1.x, c1.y, 0, -tl); ctx.stroke();
+  ctx.strokeStyle = 'rgba(' + col + ',' + (.9 * hA) + ')';
+  ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(0, -4); ctx.quadraticCurveTo(c1.x, c1.y, 0, -tl); ctx.stroke();
+  /* stacked disc striations */
+  ctx.strokeStyle = 'rgba(225,255,246,' + (.30 * hA) + ')';
+  ctx.lineWidth = .9;
+  for (i = 1; i < 11; i++) {
+    var p = i / 11, q0 = quad({ x: 0, y: -4 }, { x: 0, y: -tl }, c1, p), q1 = quad({ x: 0, y: -4 }, { x: 0, y: -tl }, c1, p + .01);
+    var nx = -(q1.y - q0.y), ny = q1.x - q0.x, ln = Math.sqrt(nx * nx + ny * ny) || 1;
+    ctx.beginPath();
+    ctx.moveTo(q0.x - nx / ln * 2.4, q0.y - ny / ln * 2.4);
+    ctx.lineTo(q0.x + nx / ln * 2.4, q0.y + ny / ln * 2.4);
+    ctx.stroke();
+  }
+  /* collar */
+  ctx.fillStyle = 'rgba(' + col + ',' + (.8 * hA) + ')';
+  ctx.fillRect(-4.2, -tl - 3, 8.4, 3);
+  /* icosahedral head */
+  var pts = [];
+  for (i = 0; i < 6; i++) { var a2 = -Math.PI / 2 + i * TAU / 6; pts.push([hR * Math.cos(a2), hR * Math.sin(a2)]); }
+  if (o.glow) {
+    var gr = ctx.createRadialGradient(0, cy, 3, 0, cy, 42);
+    gr.addColorStop(0, 'rgba(' + col + ',.16)'); gr.addColorStop(1, 'rgba(' + col + ',0)');
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, cy, 42, 0, TAU); ctx.fill();
+    var hg = ctx.createLinearGradient(0, cy - hR, 0, cy + hR);
+    hg.addColorStop(0, 'rgba(' + col + ',' + (.32 * hA) + ')');
+    hg.addColorStop(1, 'rgba(' + col + ',' + (.09 * hA) + ')');
+    ctx.fillStyle = hg;
+  } else ctx.fillStyle = 'rgba(' + col + ',' + (.24 * hA) + ')';
+  ctx.beginPath();
+  for (i = 0; i < 6; i++) { if (i) ctx.lineTo(pts[i][0], cy + pts[i][1]); else ctx.moveTo(pts[i][0], cy + pts[i][1]); }
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = 'rgba(' + col + ',' + (.95 * hA) + ')';
+  ctx.lineWidth = 1.6; ctx.stroke();
+  ctx.strokeStyle = 'rgba(220,255,246,' + (.14 * hA) + ')';
+  ctx.lineWidth = 1;
+  for (i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(0, cy); ctx.lineTo(pts[i * 2][0], cy + pts[i * 2][1]); ctx.stroke(); }
+  if (hA > .5) {
+    ctx.strokeStyle = 'rgba(225,255,248,' + (.6 * hA) + ')';
+    ctx.lineWidth = 1.1;
+    ctx.beginPath();
+    ctx.moveTo(-hR * .45, cy - hR * .25);
+    ctx.bezierCurveTo(-hR * .05, cy - hR * .5, hR * .4, cy, -hR * .3, cy + hR * .22);
+    ctx.bezierCurveTo(hR * .2, cy + hR * .45, hR * .3, cy + hR * .3, hR * .45, cy + hR * .12);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+/* ================= hero phage ================= */
+var APP = { x: -180, y: -180 };
+function heroDock(t) {
+  var c = C0();
+  var a = Math.atan2(c.y - APP.y, c.x - APP.x);
+  var rd = radOf(200 * 1.0, 105 * 1.0, a) + 2;
+  return { x: c.x - Math.cos(a) * rd * 1.0, y: c.y - Math.sin(a) * rd, a: a, cx: c.x, cy: c.y };
+}
+function heroState(t) {
+  var d = heroDock(t);
+  var A1 = { x: d.cx - Math.cos(d.a) * 320, y: d.cy - Math.sin(d.a) * 320 };
+  var x, y, ang;
+  if (t < 3.8) {
+    var p = eIO(seg(t, .3, 3.8));
+    var c = { x: (APP.x + A1.x) / 2 + Math.cos(d.a + Math.PI / 2) * 70, y: (APP.y + A1.y) / 2 + Math.sin(d.a + Math.PI / 2) * 70 };
+    var q0 = quad(APP, A1, c, p), q1 = quad(APP, A1, c, Math.min(1, p + .02));
+    x = q0.x; y = q0.y; ang = Math.atan2(q1.y - q0.y, q1.x - q0.x) - Math.PI / 2;
+  } else if (t < 5.2) {
+    var p2 = eO(seg(t, 3.8, 5.2));
+    x = lerp(A1.x, d.x, p2); y = lerp(A1.y, d.y, p2); ang = d.a - Math.PI / 2;
+  } else {
+    var w = Math.exp(-(t - 5.2) * 2.6) * 2.4, pp = d.a + Math.PI / 2;
+    x = d.x + Math.cos(pp) * Math.sin(t * 20) * w;
+    y = d.y + Math.sin(pp) * Math.sin(t * 20) * w;
+    ang = d.a - Math.PI / 2;
+  }
+  var al = t < 20 ? 1 : Math.max(0, 1 - seg(t, 20, 26) * .72);
+  if (t > 44) al *= (1 - seg(t, 44, 48));
+  return { x: x, y: y, ang: ang, al: al, hA: t > 12 ? .55 : (t > 9 ? lerp(1, .55, seg(t, 9, 12)) : 1), dock: t >= 5.2, d: d };
+}
+function drawHero(t) {
+  var s = heroState(t);
+  lam(s.x, s.y, s.ang, 1, s.al, { headAlpha: s.hA, dock: s.dock, glow: true, bend: Math.sin(t * 1.6) * 5 });
+  if (t > 5 && t < 20) {
+    var al = .8 * (1 - seg(t, 17, 20));
+    ctx.save(); ctx.globalAlpha = al; ctx.fillStyle = '#ffc08a';
+    for (var i = 0; i < 3; i++) {
+      var p = capPt(200, 105, s.d.a + Math.PI + (i - 1) * .12);
+      ctx.beginPath(); ctx.arc(s.d.cx + p.x, s.d.cy + p.y, 2.8, 0, TAU); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+/* ================= phage DNA: linear → circle → integrated ================= */
+var PC = { rx: 34, ry: 29, ph: .7 };                 /* phage circle shape */
+function pcCentre(t) {                                /* in cell-local coords */
+  var home = { x: 108, y: 22 };
+  if (t < 45) return home;
+  var c = C0(), L = c.loops[0] || { ox: 0, oy: 0, rx: 80, ry: 61, ph: 1.1 };
+  var ab = loopPt(L, ATTB + PROW * .5, t);
+  var dx = ab.x, dy = ab.y, ln = Math.sqrt(dx * dx + dy * dy) || 1;
+  var tgt = { x: L.ox + ab.x + dx / ln * (PC.rx + 6), y: L.oy + ab.y + dy / ln * (PC.ry + 6) };
+  var p = eIO(seg(t, 45, 50));
+  return { x: lerp(home.x, tgt.x, p), y: lerp(home.y, tgt.y, p) };
+}
+function dnaPt(t, u) {                                /* cell-local point on the phage genome */
+  var m = eIO(seg(t, 20, 24.3));
+  var c0 = pcCentre(t);
+  var lp = loopPt(PC, u, t);
+  var cir = { x: c0.x + lp.x, y: c0.y + lp.y };
+  if (m >= 1) return cir;
+  var d = heroDock(t), cc = C0();
+  var en = { x: d.x - cc.x + Math.cos(d.a) * 10, y: d.y - cc.y + Math.sin(d.a) * 10 };
+  var end = { x: 108, y: 22 };
+  var ctl = { x: lerp(en.x, end.x, .5) + 40, y: lerp(en.y, end.y, .5) + 78 };
+  var q = quad(en, end, ctl, u);
+  var nx = Math.cos(u * 14 + t * .5) * 26 * Math.sin(u * Math.PI);
+  var ny = Math.sin(u * 11 - t * .4) * 22 * Math.sin(u * Math.PI);
+  var lin = { x: q.x + nx, y: q.y + ny };
+  return { x: lerp(lin.x, cir.x, m), y: lerp(lin.y, cir.y, m) };
+}
+function drawPhageDNA(t) {
+  if (t < 9 || t > INT1 + .4) return;
+  var prog = t < 16 ? eO(seg(t, 9, 16)) : 1;
+  var fade = 1 - eIO(seg(t, INT0, INT1));
+  if (fade <= .01) return;
+  var n = 74, i, p;
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(150,240,220,.16)'; ctx.lineWidth = 8;
+  ctx.beginPath();
+  for (i = 0; i <= n; i++) { p = dnaPt(t, i / n * prog); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(160,246,224,.92)'; ctx.lineWidth = 2.2;
+  ctx.beginPath();
+  for (i = 0; i <= n; i++) { p = dnaPt(t, i / n * prog); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }
+  ctx.stroke();
+  /* cos ends — 12-nt single-stranded overhangs, drawn as short offset ticks */
+  var joined = seg(t, 23.6, 24.3);
+  if (joined < 1) {
+    var e0 = dnaPt(t, 0), e1 = dnaPt(t, prog);
+    ctx.strokeStyle = 'rgba(255,196,140,' + (.95 * (1 - joined)) + ')';
+    ctx.lineWidth = 2.4;
+    for (i = 0; i < 2; i++) {
+      var e = i ? e1 : e0, sgn = i ? -1 : 1;
+      ctx.beginPath();
+      ctx.moveTo(e.x, e.y);
+      ctx.lineTo(e.x + sgn * 9, e.y - 6);
+      ctx.stroke();
+      ctx.beginPath(); ctx.arc(e.x + sgn * 9, e.y - 6, 1.8, 0, TAU); ctx.fillStyle = 'rgba(255,196,140,' + (1 - joined) + ')'; ctx.fill();
+    }
+  }
+  /* ligase sealing the nicks */
+  if (t > 24 && t < 27.2) {
+    var la = seg(t, 24, 24.6) * (1 - seg(t, 26.4, 27.2));
+    ctx.fillStyle = 'rgba(255,220,175,' + (.9 * la) + ')';
+    for (i = 0; i < 3; i++) {
+      var pp = dnaPt(t, (i * .33 + t * .12) % 1);
+      ctx.beginPath(); ctx.arc(pp.x, pp.y, 3.2, 0, TAU); ctx.fill();
+    }
+  }
+  /* attP marker */
+  if (t > 24.3) {
+    var ap = dnaPt(t, ATTB + PROW * .5), aq = dnaPt(t, ATTB + PROW * .5 + .012);
+    ctx.strokeStyle = 'rgba(255,178,107,' + (.9 * seg(t, 24.3, 25.3)) + ')';
+    ctx.lineWidth = 2.6;
+    var vx = -(aq.y - ap.y), vy = aq.x - ap.x, vl = Math.sqrt(vx * vx + vy * vy) || 1;
+    ctx.beginPath();
+    ctx.moveTo(ap.x - vx / vl * 6, ap.y - vy / vl * 6);
+    ctx.lineTo(ap.x + vx / vl * 6, ap.y + vy / vl * 6);
+    ctx.stroke();
+  }
+  /* O-R operator, occupied by cI from ~37 s */
+  if (t > 31 && t < INT0) {
+    var op = dnaPt(t, .62);
+    ctx.strokeStyle = 'rgba(180,155,255,' + (.8 * seg(t, 31, 32)) + ')';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath(); ctx.arc(op.x, op.y, 5.5, 0, TAU); ctx.stroke();
+  }
+  ctx.restore();
+}
+/* ================= chromosome ================= */
+function drawLoop(L, t, alpha) {
+  if (alpha <= .01) return;
+  ctx.save();
+  ctx.globalAlpha *= alpha * (L.a === undefined ? 1 : L.a);
+  ctx.translate(L.ox, L.oy);
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(255,220,175,.13)'; ctx.lineWidth = 7;
+  loopArc(L, t, 0, 1); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,196,140,.6)'; ctx.lineWidth = 2;
+  loopArc(L, t, 0, 1); ctx.stroke();
+  if (L.pro) {
+    var c = L.act ? '95,232,198' : '180,155,255';
+    ctx.strokeStyle = 'rgba(' + c + ',.22)'; ctx.lineWidth = 12;
+    loopArc(L, t, L.pro[0], L.pro[1]); ctx.stroke();
+    ctx.strokeStyle = 'rgba(' + c + ',.95)'; ctx.lineWidth = 3.8;
+    loopArc(L, t, L.pro[0], L.pro[1]); ctx.stroke();
+    /* attL / attR junction ticks */
+    ctx.strokeStyle = 'rgba(255,178,107,.85)'; ctx.lineWidth = 2.2;
+    for (var k = 0; k < 2; k++) {
+      var u = k ? L.pro[1] : L.pro[0];
+      var a = loopPt(L, u, t), b = loopPt(L, u + .012, t);
+      var vx = -(b.y - a.y), vy = b.x - a.x, vl = Math.sqrt(vx * vx + vy * vy) || 1;
+      ctx.beginPath();
+      ctx.moveTo(a.x - vx / vl * 6, a.y - vy / vl * 6);
+      ctx.lineTo(a.x + vx / vl * 6, a.y + vy / vl * 6);
+      ctx.stroke();
+    }
+  } else if (t > 40 && t < INT1) {
+    /* bare attB site, waiting */
+    var a2 = loopPt(L, ATTB, t), b2 = loopPt(L, ATTB + .012, t);
+    var wx = -(b2.y - a2.y), wy = b2.x - a2.x, wl = Math.sqrt(wx * wx + wy * wy) || 1;
+    ctx.strokeStyle = 'rgba(255,178,107,' + (.9 * seg(t, 40, 41.5)) + ')'; ctx.lineWidth = 2.4;
+    ctx.beginPath();
+    ctx.moveTo(a2.x - wx / wl * 6, a2.y - wy / wl * 6);
+    ctx.lineTo(a2.x + wx / wl * 6, a2.y + wy / wl * 6);
+    ctx.stroke();
+  }
+  /* SOS damage lesions — one thymine dimer at a time, so the damage is seen
+     accumulating for as long as the lamp is on rather than appearing at once */
+  if (t > UV0 + .5 && t < 101) {
+    var fade = 1 - seg(t, 99, 101);
+    ctx.lineWidth = 2.4;
+    for (var j = 0; j < 5; j++) {
+      var bj = seg(t, UV0 + .7 + j * 1.15, UV0 + 1.3 + j * 1.15) * fade;
+      if (bj <= .02) continue;
+      ctx.strokeStyle = 'rgba(255,120,90,' + (.9 * bj) + ')';
+      var uu = .28 + j * .112, pa = loopPt(L, uu, t);
+      ctx.beginPath(); ctx.moveTo(pa.x - 4, pa.y - 4); ctx.lineTo(pa.x + 4, pa.y + 4);
+      ctx.moveTo(pa.x + 4, pa.y - 4); ctx.lineTo(pa.x - 4, pa.y + 4); ctx.stroke();
+    }
+    /* RecA filament */
+    var ra = seg(t, 91, 94.5) * (1 - seg(t, 99.5, 101));
+    if (ra > 0) {
+      ctx.fillStyle = 'rgba(140,240,180,' + (.85 * ra) + ')';
+      for (j = 0; j <= 14; j++) {
+        var pf = loopPt(L, .28 + (j / 14) * .56 * ra, t);
+        ctx.beginPath(); ctx.arc(pf.x, pf.y, 2.6, 0, TAU); ctx.fill();
+      }
+    }
+  }
+  ctx.restore();
+}
+/* ================= excised circle, rolling circle, packaging ================= */
+var FC = { rx: 26, ry: 22, ph: 1.9 };
+function drawEscape(t, c) {
+  if (t < EXC0 || c.gen !== 2 || IND.indexOf(c.idx) < 0) return;
+  var L = c.loops[0];
+  var ab = loopPt(L, ATTB, t);
+  var born = eIO(seg(t, EXC0 + 1, EXC1));
+  var lyp = lysOf(t, c);
+  if (born <= .01 || lyp.burst > .3) return;
+  var cx = L.ox + ab.x * 1.5, cy = L.oy + ab.y * 1.5 - 8;
+  var sc = .35 + .65 * born, i, p;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.globalAlpha = born * (1 - lyp.burst * 2.5);
+  ctx.lineCap = 'round';
+  var F = { rx: FC.rx * sc, ry: FC.ry * sc, ph: FC.ph };
+  ctx.strokeStyle = 'rgba(150,240,220,.18)'; ctx.lineWidth = 8;
+  loopArc(F, t, 0, 1); ctx.stroke();
+  ctx.strokeStyle = 'rgba(160,246,224,.92)'; ctx.lineWidth = 2.2;
+  loopArc(F, t, 0, 1); ctx.stroke();
+  /* rolling-circle concatemer spooling out, cut at each cos site */
+  var rc = seg(t, 105.5, 110.5);
+  if (rc > 0) {
+    var st = loopPt(F, .25, t), len = 96 * rc;
+    ctx.strokeStyle = 'rgba(160,246,224,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(st.x, st.y);
+    for (i = 1; i <= 30; i++) {
+      var q = i / 30;
+      ctx.lineTo(st.x + q * len, st.y + Math.sin(q * 7 + t * 1.4) * 11 * q);
+    }
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,178,107,.9)'; ctx.lineWidth = 2;
+    for (i = 1; i <= 4; i++) {
+      var q2 = i / 4.6;
+      if (q2 > rc) break;
+      var xx = st.x + q2 * len, yy = st.y + Math.sin(q2 * 7 + t * 1.4) * 11 * q2;
+      ctx.beginPath(); ctx.moveTo(xx, yy - 5); ctx.lineTo(xx, yy + 5); ctx.stroke();
+    }
+  }
+  ctx.restore();
+  /* heads filling and assembling */
+  var na = Math.floor(seg(t, 110, 116) * 9);
+  for (i = 0; i < na; i++) {
+    var an = i * 1.9 + c.idx, rr = 34 + (i % 3) * 16;
+    lam(cx + Math.cos(an) * rr, cy + Math.sin(an) * rr * .6, an,
+      .42, .9 * (1 - lyp.burst * 2), { bend: Math.sin(t + i) * 3 });
+  }
+}
+/* ================= decision-phase proteins ================= */
+function prot(x, y, kind, sc, a, t, ph) {
+  if (a <= .02) return;
+  ctx.save();
+  ctx.translate(x, y); ctx.scale(sc, sc); ctx.globalAlpha *= a;
+  ctx.lineWidth = 1.4;
+  if (kind === 0) {           /* CII — green diamond */
+    ctx.strokeStyle = 'rgba(150,240,190,.95)';
+    ctx.beginPath(); ctx.moveTo(0, -5); ctx.lineTo(4.4, 0); ctx.lineTo(0, 5); ctx.lineTo(-4.4, 0); ctx.closePath(); ctx.stroke();
+  } else if (kind === 1) {    /* cI — violet rounded block */
+    ctx.strokeStyle = 'rgba(198,178,255,.98)';
+    ctx.fillStyle = 'rgba(160,130,255,.22)';
+    ctx.beginPath();
+    if (ctx.roundRect) { ctx.roundRect(-4.6, -3.4, 9.2, 6.8, 2); } else { ctx.rect(-4.6, -3.4, 9.2, 6.8); }
+    ctx.fill(); ctx.stroke();
+  } else {                    /* Cro — amber triangle */
+    ctx.strokeStyle = 'rgba(255,178,107,.95)';
+    ctx.beginPath(); ctx.moveTo(0, -4.8); ctx.lineTo(4.4, 3.4); ctx.lineTo(-4.4, 3.4); ctx.closePath(); ctx.stroke();
+  }
+  ctx.restore();
+}
+function drawDecision(t) {
+  if (t < 27 || t > 50) return;
+  var i, o, a, wob;
+  for (i = 0; i < CII.length; i++) {
+    o = CII[i];
+    a = seg(t, o.bt, o.bt + .5) * (1 - seg(t, o.dt, o.dt + .6)) * (1 - seg(t, 40, 42));
+    wob = Math.sin(t * .9 + o.ph) * 5;
+    prot(o.x + wob, o.y + Math.cos(t * .8 + o.ph) * 4, 0, 1, a, t, o.ph);
+  }
+  for (i = 0; i < CRO.length; i++) {
+    o = CRO[i];
+    a = seg(t, o.bt, o.bt + .5) * (1 - seg(t, o.dt, o.dt + .9));
+    prot(o.x + Math.sin(t * 1.1 + o.ph) * 6, o.y + Math.cos(t * .9 + o.ph) * 5, 2, 1, a, t, o.ph);
+  }
+  /* cI: appears, dimerises, then docks on the operator */
+  var op = dnaPt(t, .62);
+  for (i = 0; i < CI.length; i++) {
+    o = CI[i];
+    a = seg(t, o.bt, o.bt + .5) * (1 - seg(t, 47, 50));
+    if (t > 92) a *= (1 - seg(t, 92, 95));
+    var dim = eIO(seg(t, 35.4, 37.6));                 /* pair up */
+    var dock = eIO(seg(t, 37.4 + (i % 4) * .25, 40.5 + (i % 4) * .25));
+    var px = o.x + Math.sin(t * .9 + o.ph) * 5, py = o.y + Math.cos(t * .8 + o.ph) * 4;
+    var mate = CI[o.pair * 2 + (1 - (i & 1))] || o;
+    var mx = (px + mate.x) / 2, my = (py + mate.y) / 2;
+    px = lerp(px, mx + ((i & 1) ? 5 : -5), dim); py = lerp(py, my, dim);
+    var ang = (i / CI.length) * TAU;
+    px = lerp(px, op.x + Math.cos(ang) * 13, dock);
+    py = lerp(py, op.y + Math.sin(ang) * 11, dock);
+    prot(px, py, 1, 1, a, t, o.ph);
+  }
+}
+/* the lytic / lysogenic fork — drawn in screen space so the camera move
+   cannot push it under the readout panel or the transport deck */
+function drawFork(t) {
+  var a = seg(t, 28, 29.5) * (1 - seg(t, 44, 46));
+  if (a <= .01) return;
+  var x = cw * .80, y = ch * .62, lyt = 1 - .78 * seg(t, 33, 38), lys = .35 + .65 * seg(t, 33, 38);
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.lineWidth = 2; ctx.lineCap = 'round';
+  ctx.strokeStyle = 'rgba(160,240,220,.5)';
+  ctx.beginPath(); ctx.moveTo(x, y + 54); ctx.lineTo(x, y + 12); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,178,107,' + (.85 * lyt) + ')';
+  ctx.beginPath(); ctx.moveTo(x, y + 12); ctx.quadraticCurveTo(x - 36, y + 2, x - 68, y - 24); ctx.stroke();
+  ctx.strokeStyle = 'rgba(190,165,255,' + (.9 * lys) + ')';
+  ctx.beginPath(); ctx.moveTo(x, y + 12); ctx.quadraticCurveTo(x + 36, y + 2, x + 68, y - 24); ctx.stroke();
+  ctx.font = '500 12px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(255,190,140,' + (.9 * lyt) + ')';
+  ctx.fillText('LYTIC', x - 70, y - 28);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(205,185,255,' + (.95 * lys) + ')';
+  ctx.fillText('LYSOGENIC', x + 70, y - 28);
+  ctx.textAlign = 'center';
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  ctx.fillStyle = 'rgba(150,190,180,.75)';
+  ctx.fillText('cI  vs  Cro', x, y + 72);
+  ctx.fillStyle = 'rgba(150,190,180,' + (.75 * seg(t, 36, 38)) + ')';
+  ctx.fillText('high MOI  ·  starved host  →  lysogeny', x, y + 90);
+  ctx.restore();
+}
+/* Int + IHF working at the att sites */
+function drawInt(t) {
+  var a = seg(t, 41.5, 42.6) * (1 - seg(t, 53.5, 55));
+  if (a <= .01) return;
+  var c = C0(), L = c.loops[0];
+  if (!L) return;
+  var ab = loopPt(L, ATTB + PROW * .5, t);
+  ctx.save();
+  ctx.translate(c.x + L.ox, c.y + L.oy);
+  ctx.globalAlpha = a;
+  for (var i = 0; i < 4; i++) {
+    var an = t * .8 + i * TAU / 4;
+    var rr = lerp(46, 15, eIO(seg(t, 43, 49)));
+    var px = ab.x + Math.cos(an) * rr, py = ab.y + Math.sin(an) * rr * .8;
+    ctx.strokeStyle = i < 2 ? 'rgba(140,240,215,.95)' : 'rgba(255,150,110,.9)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    for (var k = 0; k <= 5; k++) {
+      var a2 = k / 5 * TAU + an, qx = px + 5 * Math.cos(a2), qy = py + 5 * Math.sin(a2);
+      if (k) ctx.lineTo(qx, qy); else ctx.moveTo(qx, qy);
+    }
+    ctx.closePath(); ctx.stroke();
+  }
+  /* recombination flash */
+  var f = seg(t, INT0, INT0 + .35) * (1 - seg(t, INT0 + .35, INT0 + 1.4));
+  if (f > 0) {
+    ctx.globalAlpha = a * f;
+    ctx.strokeStyle = '#e8fff8'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(ab.x, ab.y, 10 + 34 * seg(t, INT0, INT0 + 1.4), 0, TAU); ctx.stroke();
+  }
+  ctx.restore();
+}
+/* ================= cells ================= */
+function drawBgCell(c, t) {
+  var bp = { x: c.x + Math.sin(t * .17 + c.ph) * 5, y: c.y + Math.cos(t * .21 + c.ph) * 4 };
+  ctx.save();
+  ctx.translate(bp.x, bp.y); ctx.rotate(c.rot);
+  ctx.fillStyle = 'rgba(255,150,90,.07)';
+  capPath(c.hw, c.hh); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,176,110,.10)'; ctx.lineWidth = 6; capPath(c.hw, c.hh); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,176,110,.55)'; ctx.lineWidth = 1.8; capPath(c.hw, c.hh); ctx.stroke();
+  ctx.save(); capPath(c.hw, c.hh); ctx.clip();
+  drawLoop({ ox: 0, oy: 0, rx: c.lp.rx, ry: c.lp.ry, ph: c.lp.ph, pro: null }, t, .75);
+  ctx.fillStyle = 'rgba(255,220,175,.35)';
+  for (var i = 0; i < c.ribs.length; i++) {
+    var r = c.ribs[i];
+    ctx.beginPath();
+    ctx.arc(r.x * c.hw + Math.sin(t * .3 + r.ph) * 2, r.y * c.hh + Math.cos(t * .26 + r.ph) * 1.6, 1.2, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.restore();
+}
+function drawCell(c, t) {
+  var ly = lysOf(t, c), i;
+  var sw = 1 + .16 * eO(ly.sw);
+  var hw = c.hw * sw, hh = c.hh * sw;
+  var strain = ly.sw;
+  var memA = Math.round(176 - 66 * strain);
+  ctx.save();
+  ctx.translate(c.x, c.y); ctx.rotate(c.rot);
+  if (ly.burst > 0) {
+    var pb = ly.burst;
+    ctx.fillStyle = 'rgba(255,150,90,' + (.1 * (1 - pb)) + ')';
+    capPath(hw, hh); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,' + memA + ',110,' + (1 - pb) + ')';
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    for (i = 0; i < 12; i++) {
+      var th = i / 12 * TAU, p0 = capPt(hw, hh, th), off = pb * (60 + (i % 4) * 22);
+      ctx.save();
+      ctx.translate(Math.cos(th) * off, Math.sin(th) * off);
+      ctx.rotate((i - 6) * .12 * pb);
+      ctx.beginPath();
+      var n = 7;
+      for (var j = 0; j <= n; j++) {
+        var t2 = th - .13 + .26 * j / n, q = capPt(hw, hh, t2);
+        if (j) ctx.lineTo(q.x, q.y); else ctx.moveTo(q.x, q.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+    return;
+  }
+  ctx.fillStyle = 'rgba(255,150,90,' + (.085 + .06 * strain) + ')';
+  capPath(hw, hh); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,' + memA + ',110,.11)'; ctx.lineWidth = 6; capPath(hw, hh); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,' + memA + ',110,.85)'; ctx.lineWidth = 2; capPath(hw, hh); ctx.stroke();
+  ctx.save();
+  capPath(hw, hh); ctx.clip();
+  /* ribosomes */
+  ctx.fillStyle = 'rgba(255,220,175,.42)';
+  for (i = 0; i < RIBS.length; i++) {
+    var r = RIBS[i];
+    ctx.beginPath();
+    ctx.arc(r.x * hw * .92 + Math.sin(t * .3 + r.ph) * 2, r.y * hh * .9 + Math.cos(t * .26 + r.ph) * 1.6, 1.25, 0, TAU);
+    ctx.fill();
+  }
+  for (i = 0; i < c.loops.length; i++) drawLoop(c.loops[i], t, 1);
+  if (c.gen === 0) { drawPhageDNA(t); drawDecision(t); }
+  drawEscape(t, c);
+  ctx.restore();
+  /* septum closing in from both sides */
+  if (c.sept > 0) {
+    var s = eIO(c.sept), gap = hh * (1 - s);
+    ctx.strokeStyle = 'rgba(255,' + memA + ',110,.9)';
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(0, -hh); ctx.lineTo(0, -gap);
+    ctx.moveTo(0, hh); ctx.lineTo(0, gap);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+/* ================= effects ================= */
+function ring(x, y, r, a, col, lw) {
+  if (a <= 0 || !(r > 0)) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = col; ctx.lineWidth = lw || 2;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.stroke(); ctx.restore();
+}
+function drawFx(t) {
+  var d = heroDock(t);
+  ring(d.x, d.y, 6 + 32 * seg(t, 5.4, 6.4), .8 * (1 - seg(t, 5.4, 6.4)), '#7ff0d8');
+  /* DNA entering */
+  var ip = seg(t, 9, 9.6) * (1 - seg(t, 15, 16.5));
+  if (ip > 0) ring(d.x, d.y, 4 + 4.5 * (.5 + .5 * Math.sin(t * 6)), ip * .7, '#bff6e6');
+  /* circularisation snap */
+  var cs = seg(t, 24.1, 24.4) * (1 - seg(t, 24.4, 25.6));
+  if (cs > 0) {
+    var c = C0(), pp = dnaPt(t, 0);
+    ring(c.x + pp.x, c.y + pp.y, 6 + 40 * seg(t, 24.1, 25.6), cs * .9, '#d7fff0');
+  }
+  /* toxin molecules — lysogenic conversion */
+  if (t > 82 && t < 92) {
+    ctx.save();
+    for (var i = 0; i < TOX.length; i++) {
+      var o = TOX[i];
+      if (t < o.sT) continue;
+      var cc = cellByIdx(o.c), pr = t - o.sT;
+      var x = cc.x + Math.cos(o.dir) * o.sp * pr, y = cc.y + Math.sin(o.dir) * o.sp * pr - 4;
+      var a = .85 * Math.min(1, pr / .5) * (1 - seg(t, 89.5, 92));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#ffe08a';
+      ctx.beginPath(); ctx.arc(x + Math.sin(t + o.ph) * 3, y, 2.6, 0, TAU); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,224,138,.35)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(x + Math.sin(t + o.ph) * 3, y, 5.5, 0, TAU); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  /* lysis shockwaves */
+  for (i = 0; i < LYS.length; i++) {
+    var L2 = LYS[i], lp = seg(t, L2.t1, L2.t1 + 1.6);
+    if (lp > 0 && lp < 1) {
+      var cl = cellByIdx(L2.i);
+      ring(cl.x, cl.y, 16 + 120 * lp, (1 - lp) * .8, '#ffb26b');
+    }
+  }
+}
+function drawBurst(t) {
+  for (var i = 0; i < BURST.length; i++) {
+    var o = BURST[i];
+    if (t < o.sT || t > SCN) continue;
+    var c = cellByIdx(o.c), p = t - o.sT;
+    var x = c.x + Math.cos(o.dir) * (o.r0 + o.sp * p) + Math.sin(t * .7 + o.ph) * 6;
+    var y = c.y + Math.sin(o.dir) * (o.r0 + o.sp * p) * .8 + Math.cos(t * .6 + o.ph) * 5;
+    lam(x, y, o.dir - Math.PI / 2 + Math.sin(t * .5 + o.ph) * .2, .4,
+      .9 * Math.min(1, p / .35) * (1 - seg(t, 121, SCN)), { bend: Math.sin(t + o.ph) * 4 });
+  }
+}
+/* the lamp: a hard strike at switch-on settling to a steady flickering glare
+   that stays up long enough to read, then fades as it is switched off.
+   Drawn in screen space so it covers the whole viewport at any aspect. */
+function uvLevel(t) {
+  if (t < UV0 || t > UV1) return 0;
+  var on = seg(t, UV0, UV0 + .28) * (1 - seg(t, UV1 - 1.4, UV1));
+  var strike = c01(Math.exp(-(t - UV0 - .28) * 1.9));
+  var flicker = .90 + .10 * Math.sin(t * 43) + .05 * Math.sin(t * 7.7);
+  return on * (.34 + .66 * strike) * flicker;
+}
+function drawUV(t) {
+  var a = uvLevel(t);
+  if (a <= .01) return;
+  ctx.save();
+  ctx.globalAlpha = a * .28;
+  ctx.fillStyle = '#c9b6ff';
+  ctx.fillRect(0, 0, cw, ch);
+  ctx.globalAlpha = a * .45;
+  ctx.strokeStyle = 'rgba(226,214,255,.9)';
+  ctx.lineWidth = 2;
+  var sp = 132, off = (t * 34) % sp;
+  for (var i = -1; i * sp < cw + 120; i++) {
+    var x = i * sp + off;
+    ctx.beginPath(); ctx.moveTo(x, -20); ctx.lineTo(x - 70, ch + 20); ctx.stroke();
+  }
+  ctx.restore();
+}
+/* lamp status badge — tells the viewer the exposure is running and how far
+   through it is, so a five-second beat reads as deliberate rather than a glitch */
+function drawUVBadge(t) {
+  if (t < UV0 - .2 || t > UV1 + .8) return;
+  var a = seg(t, UV0, UV0 + .3) * (1 - seg(t, UV1, UV1 + .7));
+  if (a <= .01) return;
+  var w = 210, h = 30, x = cw * .5 - w / 2, y = 74;
+  var p = c01((t - UV0) / (UV1 - UV0));
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, 15); else ctx.rect(x, y, w, h);
+  ctx.fillStyle = 'rgba(22,14,44,.85)'; ctx.fill();
+  ctx.strokeStyle = 'rgba(201,182,255,.5)'; ctx.lineWidth = 1; ctx.stroke();
+  var blink = .55 + .45 * Math.sin(t * 9);
+  ctx.fillStyle = 'rgba(201,182,255,' + blink + ')';
+  ctx.beginPath(); ctx.arc(x + 18, y + h / 2, 4.5, 0, TAU); ctx.fill();
+  ctx.font = '500 11px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(226,214,255,.95)';
+  ctx.fillText('UV 254 nm · EXPOSURE', x + 32, y + h / 2 + 4);
+  ctx.fillStyle = 'rgba(201,182,255,.22)';
+  ctx.fillRect(x + 14, y + h - 5, w - 28, 2);
+  ctx.fillStyle = 'rgba(201,182,255,.9)';
+  ctx.fillRect(x + 14, y + h - 5, (w - 28) * p, 2);
+  ctx.restore();
+}
+/* ================= annotations ================= */
+function loopWorld(c, u, t) {
+  var L = c.loops[0] || { ox: 0, oy: 0, rx: 80, ry: 60, ph: 1.1 };
+  var p = loopPt(L, u, t);
+  return { x: c.x + L.ox + p.x, y: c.y + L.oy + p.y };
+}
+function dnaWorld(t, u) { var c = C0(), p = dnaPt(t, u); return { x: c.x + p.x, y: c.y + p.y }; }
+var ANN = [
+  { a: 5.4, b: 9.4, fn: function (t) { return { txt: 'tail-tip protein J → LamB porin', pt: heroDock(t), o: { x: -74, y: -58, side: 1 } }; } },
+  { a: 9.8, b: 14.2, fn: function (t) { var s = heroState(t); return { txt: 'non-contractile tail — no sheath fires', pt: { x: s.x, y: s.y - 30 }, o: { x: -60, y: -74, side: 1 } }; } },
+  { a: 14.6, b: 19.4, fn: function (t) { return { txt: 'linear dsDNA · 48,502 bp', pt: dnaWorld(t, .55), o: { x: 86, y: 92, side: 0 } }; } },
+  { a: 19.6, b: 23.8, fn: function (t) { return { txt: '12-nt cohesive cos ends', pt: dnaWorld(t, .02), o: { x: -104, y: -96, side: 1 } }; } },
+  { a: 24.6, b: 27.4, fn: function (t) { return { txt: 'host DNA ligase seals the nicks', pt: dnaWorld(t, .3), o: { x: 104, y: -70, side: 0 } }; } },
+  { a: 28.2, b: 33.2, fn: function (t) { return { txt: 'CII stabilised → cI transcribed', pt: dnaWorld(t, .78), o: { x: -150, y: -104, side: 1 } }; } },
+  { a: 33.6, b: 38.4, fn: function (t) { return { txt: 'cI dimers occupy Oᴿ — lytic genes off', pt: dnaWorld(t, .62), o: { x: 54, y: 150, side: 0 } }; } },
+  { a: 42, b: 46.4, fn: function (t) { return { txt: 'Int + IHF bend attP', pt: loopWorld(C0(), ATTB + PROW * .5, t), o: { x: -132, y: -102, side: 1 } }; } },
+  { a: 46.8, b: 51.4, fn: function (t) { return { txt: 'attP × attB — between gal and bio', pt: loopWorld(C0(), ATTB, t), o: { x: 128, y: -92, side: 0 } }; } },
+  { a: 52.4, b: 57.4, fn: function (t) { return { txt: 'attL and attR now flank the prophage', pt: loopWorld(C0(), ATTB + PROW * .5, t), o: { x: 120, y: 100, side: 0 } }; } },
+  { a: 58.4, b: 63.4, fn: function (t) { return { txt: 'prophage copied with the chromosome', pt: loopWorld(C0(), ATTB + PROW * .5, t), o: { x: -140, y: -108, side: 1 } }; } },
+  { a: 66.4, b: 71.4, fn: function (t) { return { txt: 'every daughter inherits it', pt: { x: cellByIdx(1).x, y: cellByIdx(1).y - 60 }, o: { x: -34, y: -104, side: 1 } }; } },
+  { a: 76.4, b: 81.4, fn: function (t) { return { txt: 'cytoplasmic cI blocks superinfection', pt: { x: cellByIdx(0).x, y: cellByIdx(0).y - 55 }, o: { x: -60, y: -96, side: 1 } }; } },
+  { a: 83.4, b: 88.2, fn: function (t) { return { txt: 'lysogenic conversion — Shiga toxin genes', pt: { x: cellByIdx(1).x, y: cellByIdx(1).y - 58 }, o: { x: -18, y: -116, side: 0 } }; } },
+  { a: 88.9, b: 95.6, fn: function (t) { return { txt: 'UV damage → thymine dimers → SOS', pt: { x: cellByIdx(1).x, y: cellByIdx(1).y }, o: { x: -78, y: -108, side: 1 } }; } },
+  { a: 95.8, b: 100.2, fn: function (t) { return { txt: 'RecA* triggers cI self-cleavage', pt: { x: cellByIdx(2).x, y: cellByIdx(2).y }, o: { x: 30, y: -118, side: 0 } }; } },
+  { a: 100.8, b: 105.4, fn: function (t) { return { txt: 'Xis + Int excise the prophage', pt: loopWorld(cellByIdx(1), ATTB, t), o: { x: -70, y: -104, side: 1 } }; } },
+  { a: 106, b: 110.4, fn: function (t) { return { txt: 'rolling-circle → concatemer', pt: { x: cellByIdx(2).x + 20, y: cellByIdx(2).y }, o: { x: 26, y: 140, side: 0 } }; } },
+  { a: 110.8, b: 115.4, fn: function (t) { return { txt: 'cut at every cos site as it packages', pt: { x: cellByIdx(1).x, y: cellByIdx(1).y + 40 }, o: { x: -70, y: 110, side: 1 } }; } },
+  { a: 108.5, b: 114, fn: function (t) { return { txt: 'these two stayed lysogenic', pt: { x: cellByIdx(3).x, y: cellByIdx(3).y + 34 }, o: { x: -26, y: 104, side: 1 } }; } },
+  { a: 117.8, b: 122.4, fn: function (t) { return { txt: 'lysis — the lytic cycle takes over', pt: { x: cellByIdx(1).x, y: cellByIdx(1).y }, o: { x: -96, y: 122, side: 1 } }; } }
+];
+function drawAnno(t) {
+  var k = 1 / CAMZ;                       /* undo the camera zoom for text */
+  ctx.save();
+  ctx.font = '500 ' + (12 * k).toFixed(2) + 'px "IBM Plex Mono", monospace';
+  for (var i = 0; i < ANN.length; i++) {
+    var A = ANN[i];
+    var al = seg(t, A.a, A.a + .5) * (1 - seg(t, A.b - .5, A.b));
+    if (al <= 0) continue;
+    var r = A.fn(t);
+    var lx = r.pt.x + r.o.x * k, ly = r.pt.y + r.o.y * k;
+    ctx.globalAlpha = al;
+    ctx.strokeStyle = 'rgba(160,240,220,.55)'; ctx.lineWidth = k;
+    ctx.beginPath(); ctx.moveTo(r.pt.x, r.pt.y); ctx.lineTo(lx, ly); ctx.stroke();
+    ctx.fillStyle = 'rgba(160,240,220,.9)';
+    ctx.beginPath(); ctx.arc(r.pt.x, r.pt.y, 2.2 * k, 0, TAU); ctx.fill();
+    ctx.textAlign = r.o.side ? 'right' : 'left';
+    var tx = r.o.side ? lx - 6 * k : lx + 6 * k;
+    ctx.lineWidth = 4 * k; ctx.strokeStyle = 'rgba(3,12,17,.85)';
+    ctx.strokeText(r.txt, tx, ly + 4 * k);
+    ctx.fillStyle = 'rgba(190,248,230,.95)';
+    ctx.fillText(r.txt, tx, ly + 4 * k);
+  }
+  ctx.restore();
+}
+/* ================= environment ================= */
+var cw = 0, ch = 0, dpr = 1;
+function resize() {
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cw = window.innerWidth; ch = window.innerHeight;
+  cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr);
+  cv.style.width = cw + 'px'; cv.style.height = ch + 'px';
+}
+window.addEventListener('resize', resize);
+resize();
+function blot(x, y, r, c) {
+  var g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, c); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+function drawBG(t) {
+  var g = ctx.createLinearGradient(0, 0, 0, ch);
+  g.addColorStop(0, '#082430'); g.addColorStop(.5, '#051a25'); g.addColorStop(1, '#030d15');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
+  blot(cw * .24 + Math.sin(t * .03) * 90, ch * .32 + Math.cos(t * .023) * 60, cw * .38, 'rgba(24,110,112,.10)');
+  blot(cw * .8 + Math.cos(t * .026) * 70, ch * .72, cw * .3, 'rgba(255,140,90,.045)');
+  blot(cw * .62, ch * .2 + Math.sin(t * .02) * 50, cw * .28, 'rgba(120,90,190,' + (.03 + .05 * seg(t, 40, 60) * (1 - seg(t, 96, 104))) + ')');
+  for (var i = 0; i < motesB.length; i++) {
+    var m = motesB[i];
+    var x = ((m.x * cw + t * m.sp * m.z) % (cw + 30) + cw + 30) % (cw + 30) - 15;
+    var y = ((m.y * ch + Math.sin(t * .2 + m.ph) * 16) % (ch + 30) + ch + 30) % (ch + 30) - 15;
+    ctx.globalAlpha = .05 + .08 * m.z;
+    ctx.fillStyle = 'rgba(180,230,215,1)';
+    ctx.beginPath(); ctx.arc(x, y, .7 + 1.5 * m.z, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function drawFrame() {
+  var v = ctx.createRadialGradient(cw / 2, ch / 2, Math.min(cw, ch) * .36, cw / 2, ch / 2, Math.max(cw, ch) * .72);
+  v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(2,8,12,.6)');
+  ctx.fillStyle = v; ctx.fillRect(0, 0, cw, ch);
+  ctx.strokeStyle = 'rgba(200,240,230,.2)'; ctx.lineWidth = 1.5;
+  var L = 22, o = 20;
+  ctx.beginPath();
+  ctx.moveTo(o, o + L); ctx.lineTo(o, o); ctx.lineTo(o + L, o);
+  ctx.moveTo(cw - o - L, o); ctx.lineTo(cw - o, o); ctx.lineTo(cw - o, o + L);
+  ctx.moveTo(cw - o, ch - o - L); ctx.lineTo(cw - o, ch - o); ctx.lineTo(cw - o - L, ch - o);
+  ctx.moveTo(o + L, ch - o); ctx.lineTo(o, ch - o); ctx.lineTo(o, ch - o - L);
+  ctx.stroke();
+  var sx = 64, sy = 122;
+  ctx.strokeStyle = 'rgba(200,240,230,.4)'; ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(sx, sy); ctx.lineTo(sx + 84, sy);
+  ctx.moveTo(sx, sy - 4); ctx.lineTo(sx, sy + 4);
+  ctx.moveTo(sx + 84, sy - 4); ctx.lineTo(sx + 84, sy + 4);
+  ctx.stroke();
+  ctx.font = '500 10px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(200,240,230,.45)';
+  ctx.fillText('1 µm', sx + 32, sy - 7);
+  for (var i = 0; i < motesF.length; i++) {
+    var m = motesF[i];
+    var x = ((m.x * cw + i * 373) % (cw + 40) + cw + 40) % (cw + 40) - 20;
+    var y = ((m.y * ch + i * 211) % (ch + 40) + ch + 40) % (ch + 40) - 20;
+    ctx.globalAlpha = .14;
+    ctx.fillStyle = 'rgba(180,230,215,1)';
+    ctx.beginPath(); ctx.arc(x, y, 1.6, 0, TAU); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+/* ================= master render ================= */
+/* camera: tight on the single infected cell while everything important is
+   happening inside it, pulling back over the first division to reveal the
+   microcolony. CAMZ lets annotation text keep a constant on-screen size. */
+var CAMZ = 1;
+function cam(t) {
+  var p1 = eIO(seg(t, 54, 68));                 /* pull back to the microcolony */
+  var z = lerp(1.7, 1, p1), fx = lerp(CX, 800, p1), fy = lerp(520, 500, p1);
+  var p2 = eIO(seg(t, 98, 105));                /* push back in on the two induced cells */
+  z = lerp(z, 1.45, p2); fx = lerp(fx, 880, p2); fy = lerp(fy, CY + 8, p2);
+  var p3 = eIO(seg(t, 117, 123));               /* wide again for the burst */
+  z = lerp(z, 1, p3); fx = lerp(fx, 820, p3); fy = lerp(fy, 500, p3);
+  return { z: z, x: fx, y: fy };
+}
+function render(t) {
+  var fa = Math.max(1 - seg(t, 0, 1.4), seg(t, SCN - 1, SCN));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (fa >= 1) { ctx.fillStyle = 'rgb(2,8,12)'; ctx.fillRect(0, 0, cw, ch); return; }
+  ctx.lineJoin = 'round';
+  drawBG(t);
+  var cm = cam(t);
+  CAMZ = cm.z;
+  var s = Math.min(cw / W, ch / H) * cm.z;
+  ctx.save();
+  ctx.translate(cw / 2 - cm.x * s, ch / 2 - cm.y * s);
+  ctx.scale(s, s);
+  CUR = cellsAt(t);
+  for (var i = 0; i < BGC.length; i++) drawBgCell(BGC[i], t);
+  for (i = 0; i < CUR.length; i++) drawCell(CUR[i], t);
+  if (t < 48) drawHero(t);
+  drawInt(t);
+  drawBurst(t);
+  drawFx(t);
+  drawAnno(t);
+  ctx.restore();
+  drawUV(t);
+  drawFork(t);
+  drawFrame();
+  drawUVBadge(t);
+  if (fa > 0) { ctx.fillStyle = 'rgba(2,8,12,' + fa + ')'; ctx.fillRect(0, 0, cw, ch); }
+}
+/* ================= sound ================= */
+var SFX_GAIN = 3.2;
+var sfx = {
+  on: false, ctx: null,
+  init: function () {
+    var C = this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.master = C.createGain();
+    this.master.gain.value = SFX_GAIN;
+    var lim = C.createDynamicsCompressor();
+    lim.threshold.value = -8; lim.knee.value = 6; lim.ratio.value = 12;
+    lim.attack.value = .003; lim.release.value = .12;
+    this.master.connect(lim); lim.connect(C.destination);
+    var len = 2 * C.sampleRate, buf = C.createBuffer(1, len, C.sampleRate), d = buf.getChannelData(0), l = 0, i;
+    for (i = 0; i < len; i++) { l = l * .98 + (Math.random() * 2 - 1) * .02; d[i] = l * 3; }
+    var src = C.createBufferSource(); src.buffer = buf; src.loop = true;
+    var f = C.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 240;
+    var g = C.createGain(); g.gain.value = .045;
+    src.connect(f); f.connect(g); g.connect(this.master); src.start();
+    var lfo = C.createOscillator(); lfo.frequency.value = .07;
+    var lg = C.createGain(); lg.gain.value = 70;
+    lfo.connect(lg); lg.connect(f.frequency); lfo.start();
+    this.nb = C.createBuffer(1, C.sampleRate, C.sampleRate);
+    var nd = this.nb.getChannelData(0);
+    for (i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+  },
+  env: function (type, f0, f1, dur, vol) {
+    if (!this.ctx) return;
+    var C = this.ctx, n = C.currentTime, o = C.createOscillator(), g = C.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(f0, n);
+    o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), n + dur);
+    g.gain.setValueAtTime(vol, n);
+    g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+    o.connect(g); g.connect(this.master);
+    o.start(n); o.stop(n + dur + .05);
+  },
+  nz: function (dur, f0, f1, vol) {
+    if (!this.ctx) return;
+    var C = this.ctx, n = C.currentTime, s = C.createBufferSource();
+    s.buffer = this.nb;
+    var f = C.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1;
+    f.frequency.setValueAtTime(f0, n);
+    f.frequency.exponentialRampToValueAtTime(f1, n + dur);
+    var g = C.createGain();
+    g.gain.setValueAtTime(vol, n);
+    g.gain.exponentialRampToValueAtTime(.0001, n + dur);
+    s.connect(f); f.connect(g); g.connect(this.master);
+    s.start(n); s.stop(n + dur + .05);
+  },
+  /* the lamp drone: filtered hiss + a lowpassed ballast buzz, held for as long
+     as the UV is on. Driven from the frame loop, not the one-shot event list,
+     so pausing, scrubbing or muting all stop it. */
+  uvNode: null,
+  uvSet: function (v) {
+    if (!this.on || !this.ctx) v = false;
+    if (v === !!this.uvNode) return;
+    var C = this.ctx, now = C.currentTime;
+    if (v) {
+      var src = C.createBufferSource(); src.buffer = this.nb; src.loop = true;
+      var bp = C.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 3400; bp.Q.value = .7;
+      var ng = C.createGain(); ng.gain.value = .042;
+      src.connect(bp); bp.connect(ng);
+      var osc = C.createOscillator(); osc.type = 'sawtooth'; osc.frequency.value = 100;
+      var lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400;
+      var og = C.createGain(); og.gain.value = .05;
+      osc.connect(lp); lp.connect(og);
+      var g = C.createGain(); g.gain.setValueAtTime(.0001, now);
+      ng.connect(g); og.connect(g); g.connect(this.master);
+      g.gain.exponentialRampToValueAtTime(1, now + .14);
+      var lfo = C.createOscillator(); lfo.frequency.value = 8.5;
+      var lg = C.createGain(); lg.gain.value = .16;
+      lfo.connect(lg); lg.connect(g.gain); lfo.start();
+      src.start(); osc.start();
+      this.uvNode = { src: src, osc: osc, lfo: lfo, g: g };
+    } else {
+      var n2 = this.uvNode; this.uvNode = null;
+      n2.g.gain.cancelScheduledValues(now);
+      n2.g.gain.setValueAtTime(Math.max(.0001, n2.g.gain.value), now);
+      n2.g.gain.exponentialRampToValueAtTime(.0001, now + .28);
+      n2.src.stop(now + .34); n2.osc.stop(now + .34); n2.lfo.stop(now + .34);
+    }
+  },
+  play: function (n) {
+    if (!this.on || !this.ctx) return;
+    var self = this;
+    switch (n) {
+      case 'tick': this.env('sine', 1300, 650, .09, .12); break;
+      case 'whoosh': this.nz(.5, 300, 1800, .07); break;
+      case 'snap': this.env('sine', 1600, 900, .07, .13); this.nz(.08, 2200, 900, .06); break;
+      case 'lock': this.env('sine', 300, 90, .35, .26); this.env('triangle', 150, 70, .3, .12); break;
+      case 'div': this.env('sine', 520, 320, .18, .1); break;
+      case 'zap': this.nz(.35, 2600, 400, .16); this.env('sawtooth', 900, 120, .25, .09); break;
+      case 'unlock': this.env('triangle', 140, 420, .3, .13); break;
+      case 'pop': this.env('sine', 170, 45, .3, .3); this.nz(.15, 900, 200, .12); break;
+      case 'shimmer':
+        [1900, 2500, 3200].forEach(function (f, i) { setTimeout(function () { self.env('sine', f, f * .9, .25, .05); }, i * 90); });
+        break;
+      case 'ui': this.env('square', 300, 260, .04, .04); break;
+    }
+  }
+};
+var EVENTS = [
+  { t: 5.4, f: 'tick' }, { t: 9.0, f: 'whoosh' }, { t: 24.2, f: 'snap' }, { t: 37.6, f: 'tick' },
+  { t: 50.1, f: 'lock' }, { t: 65, f: 'div' }, { t: 78, f: 'div' }, { t: 82.8, f: 'tick' },
+  { t: 88.05, f: 'zap' }, { t: 95.5, f: 'ui' }, { t: 96.6, f: 'unlock' }, { t: 104.5, f: 'unlock' },
+  { t: 117.5, f: 'pop' }, { t: 119, f: 'pop' }, { t: 120.5, f: 'shimmer' }
+];
+function fireBetween(a, b) {
+  if (!sfx.on) return;
+  for (var i = 0; i < EVENTS.length; i++) { var e = EVENTS[i]; if (e.t > a && e.t <= b) sfx.play(e.f); }
+}
+/* ================= state & UI ================= */
+var t = 0, playing = !reduced, speed = 1, loop = true;
+var stepsEl = document.getElementById('steps');
+var fillEl = document.getElementById('fill');
+var thumbEl = document.getElementById('thumb');
+var tipEl = document.getElementById('tip');
+var trackEl = document.getElementById('track');
+var tcodeEl = document.getElementById('tcode');
+var playBtn = document.getElementById('play');
+var capb = document.getElementById('capb');
+var capn = document.getElementById('capn');
+var capT = document.getElementById('capT');
+var capD = document.getElementById('capD');
+var endEl = document.getElementById('end');
+var vS = document.getElementById('vS');
+var vP = document.getElementById('vP');
+var vG = document.getElementById('vG');
+var vC = document.getElementById('vC');
+var loopB = document.getElementById('loopB');
+var sndB = document.getElementById('sndB');
+var scrubEl = document.getElementById('scrub');
+var spdsEl = document.getElementById('spds');
+function fmt(x) {
+  x = Math.max(0, Math.round(x));
+  var mm = Math.floor(x / 60), ss = x % 60;
+  return (mm < 10 ? '0' : '') + mm + ':' + (ss < 10 ? '0' : '') + ss;
+}
+function setPlaying(v) { playing = v; }
+function seekTo(v) { t = clamp(v, 0, T); render(t); ui(t); }
+function togglePlay() { if (t >= T - .01) t = 0; setPlaying(!playing); }
+for (var si = 0; si < PH.length; si++) {
+  (function (idx) {
+    var b = document.createElement('button');
+    b.className = 'step';
+    b.innerHTML = '<span class="dot"></span><span class="lbl">' + (idx + 1 < 10 ? '0' : '') + (idx + 1) + ' ' + PH[idx].s + '</span>';
+    b.onclick = function () { seekTo(B[idx] + .02); setPlaying(true); sfx.play('ui'); };
+    stepsEl.appendChild(b);
+  })(si);
+}
+var stepBtns = Array.prototype.slice.call(stepsEl.children);
+for (si = 1; si < B.length; si++) {
+  var tk = document.createElement('div');
+  tk.className = 'tick';
+  tk.style.left = (B[si] / T * 100) + '%';
+  trackEl.appendChild(tk);
+}
+var spdBtns = Array.prototype.slice.call(spdsEl.querySelectorAll('button'));
+var curPhase = -1, curPlay = -1;
+function setPhaseUI(i) {
+  for (var j = 0; j < stepBtns.length; j++) {
+    stepBtns[j].classList.toggle('active', j === i);
+    stepBtns[j].classList.toggle('done', j < i);
+  }
+  capn.textContent = (i + 1 < 10 ? '0' : '') + (i + 1);
+  capT.textContent = PH[i].n;
+  capD.textContent = PH[i].d;
+  capb.classList.remove('anim');
+  void capb.offsetWidth;
+  capb.classList.add('anim');
+  sfx.play('ui');
+}
+function setVal(el, v) {
+  if (el.textContent !== String(v)) {
+    el.textContent = v;
+    el.classList.remove('pop');
+    void el.offsetWidth;
+    el.classList.add('pop');
+  }
+}
+function ui(t2) {
+  tcodeEl.textContent = fmt(t2) + ' / ' + fmt(T);
+  var pct = t2 / T * 100;
+  fillEl.style.width = pct + '%';
+  thumbEl.style.left = pct + '%';
+  var pi = 0, i;
+  for (i = B.length - 1; i >= 0; i--) if (t2 >= B[i]) { pi = i; break; }
+  if (pi !== curPhase) { curPhase = pi; setPhaseUI(pi); }
+  setVal(vS, t2 < 9 ? 'free' : (t2 < 24.3 ? 'linear' : (t2 < INT0 ? 'circular' : (t2 < EXC1 ? 'integrated' : 'excised'))));
+  setVal(vP, t2 < INT1 ? (t2 < INT0 ? 0 : 1) : (t2 < SEP1[1] ? 1 : (t2 < SEP2[1] ? 2 : (t2 < 121.5 ? 4 : 2))));
+  setVal(vG, t2 < SEP1[1] ? '0' : (t2 < SEP2[1] ? 'I' : 'II'));
+  setVal(vC, t2 < 30.8 ? '—' : (t2 < 37.4 ? 'rising' : (t2 < 94 ? 'high' : (t2 < 97.5 ? 'cleaved' : 'gone'))));
+  endEl.style.opacity = seg(t2, 121.2, 122.8) * (1 - seg(t2, T - 1, T - .2));
+  if (playing !== curPlay) { curPlay = playing; playBtn.classList.toggle('on', playing); }
+}
+playBtn.onclick = togglePlay;
+cv.onclick = togglePlay;
+loopB.onclick = function () { loop = !loop; loopB.classList.toggle('on', loop); sfx.play('ui'); };
+sndB.onclick = function () {
+  sfx.on = !sfx.on;
+  if (sfx.on) {
+    if (!sfx.ctx) sfx.init();
+    if (sfx.ctx.resume) sfx.ctx.resume();
+    sfx.play('tick');
+  }
+  if (!sfx.on) sfx.uvSet(false);
+  sndB.classList.toggle('on', sfx.on);
+  var w1 = sndB.querySelector('.w1'), w2 = sndB.querySelector('.w2');
+  if (w1) w1.setAttribute('opacity', sfx.on ? 1 : .25);
+  if (w2) w2.setAttribute('opacity', sfx.on ? 1 : .25);
+};
+for (si = 0; si < spdBtns.length; si++) {
+  (function (btn) {
+    btn.onclick = function () {
+      speed = parseFloat(btn.getAttribute('data-s'));
+      for (var j = 0; j < spdBtns.length; j++) spdBtns[j].classList.toggle('on', spdBtns[j] === btn);
+      sfx.play('ui');
+    };
+  })(spdBtns[si]);
+}
+window.addEventListener('keydown', function (e) {
+  if (e.code === 'Space') {
+    if (e.target && e.target.closest && e.target.closest('button')) return;
+    e.preventDefault(); togglePlay();
+  } else if (e.key === 'ArrowRight') seekTo(t + 4);
+  else if (e.key === 'ArrowLeft') seekTo(t - 4);
+  else if (e.key === '1') spdBtns[0].click();
+  else if (e.key === '2') spdBtns[1].click();
+  else if (e.key === '3') spdBtns[2].click();
+  else if (e.key.toLowerCase() === 'l') loopB.click();
+});
+var dragging = false;
+function scrubTo(e) {
+  var r = trackEl.getBoundingClientRect();
+  seekTo(c01((e.clientX - r.left) / r.width) * T);
+}
+scrubEl.addEventListener('pointerdown', function (e) {
+  dragging = true;
+  if (scrubEl.setPointerCapture) scrubEl.setPointerCapture(e.pointerId);
+  scrubTo(e);
+});
+scrubEl.addEventListener('pointermove', function (e) {
+  var r = trackEl.getBoundingClientRect();
+  var x = clamp(e.clientX - r.left, 0, r.width);
+  var tv = x / r.width * T, pi = 0, i;
+  for (i = B.length - 1; i >= 0; i--) if (tv >= B[i]) { pi = i; break; }
+  tipEl.textContent = (pi + 1 < 10 ? '0' : '') + (pi + 1) + ' · ' + PH[pi].n + ' — ' + fmt(tv);
+  tipEl.style.left = clamp(x, 60, r.width - 60) + 'px';
+  tipEl.classList.add('show');
+  if (dragging) scrubTo(e);
+});
+scrubEl.addEventListener('pointerup', function () { dragging = false; });
+scrubEl.addEventListener('pointerleave', function () { if (!dragging) tipEl.classList.remove('show'); });
+/* ================= main loop ================= */
+var last = performance.now();
+function frame(now) {
+  var dt = Math.min(.05, (now - last) / 1000);
+  last = now;
+  if (playing) {
+    var nt = t + dt * speed;
+    if (nt >= T) {
+      if (loop) { fireBetween(t, T); t = nt - T; }
+      else { t = T; playing = false; }
+    } else { fireBetween(t, nt); t = nt; }
+  }
+  render(t);
+  ui(t);
+  sfx.uvSet(playing && t >= UV0 && t <= UV1);
+  requestAnimationFrame(frame);
+}
+setPhaseUI(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
