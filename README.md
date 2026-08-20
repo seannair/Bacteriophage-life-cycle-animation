@@ -60,9 +60,9 @@ scrubber marks phase boundaries with amber ticks and previews the phase under
 the cursor. Sound is off by default — the speaker icon enables a procedural
 soundtrack built with the Web Audio API, so there are no audio files to load.
 
-## Where the animations simplify
+## Where the animations are simplified
 
-Every teaching animation lies somewhere. These are the places these two do, so
+Most teaching animations are simplified somewhere. These are the places these two do, so
 that the exaggerations are not mistaken for scale:
 
 - A wild-type T4 burst is 100–200 particles; the lytic film uses ≈50, a
@@ -82,18 +82,21 @@ that the exaggerations are not mistaken for scale:
   little changes to look at during it.
 
 Cholera toxin is deliberately *not* offered as an example of lysogenic
-conversion in the λ film. It is prophage-encoded, but CTXφ is a filamentous
+conversion in the λ animation. It is prophage-encoded, but CTXφ is a filamentous
 phage that extrudes from the cell rather than lysing it, so it does not follow
 the life cycle being shown. Shiga toxin, carried by genuinely lambdoid
 prophages, does.
 
 ## Running them
 
-Open either file in any modern browser, including straight from the filesystem
-(`file://`). The only network request is a Google Fonts stylesheet, and both
-degrade to system fonts without it. Nothing is tracked and nothing is loaded
-from anywhere else.
+The animations can be run directly from the play button above. This is preferable 
+if you are online as it gives you full access to all the teaching material in one 
+browser window. 
+Alternatively you can download the HTML code and open either file in any modern 
+browser, including straight from the filesystem (`file://`). Nothing is tracked and 
+nothing is loaded from anywhere else. The animation can then be viewed offline.
 
+## Technical snippet
 Rendering is a single `<canvas>` driven by `render(t)`, a pure function of
 elapsed time — every particle position is derived from `t` rather than
 accumulated frame to frame. Scrubbing, seeking and speed changes are therefore
